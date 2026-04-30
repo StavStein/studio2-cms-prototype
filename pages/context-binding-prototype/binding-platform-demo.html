@@ -6790,6 +6790,39 @@
         width: 18px;
         height: 18px;
       }
+      .ab-ai-action {
+        position: relative;
+        color: var(--acc);
+      }
+      .ab-ai-menu {
+        position: absolute;
+        left: 0;
+        bottom: calc(100% + 8px);
+        min-width: 192px;
+        padding: 6px;
+        background: var(--sur);
+        border: 1px solid var(--b1);
+        border-radius: 8px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+        display: none;
+        z-index: 1002;
+      }
+      .ab-ai-menu.open {
+        display: block;
+      }
+      .ab-ai-menu-item {
+        padding: 8px 10px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--t1);
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .ab-ai-menu-item:hover {
+        background: var(--sur2);
+        color: var(--acc);
+      }
       .ab-dropdown {
         display: flex;
         align-items: center;
@@ -6843,6 +6876,66 @@
       }
       .ab-color:hover {
         border-color: var(--b3);
+      }
+      .ab-split-action {
+        position: relative;
+        gap: 8px;
+        padding-right: 10px;
+      }
+      .ab-split-main {
+        padding-right: 10px;
+      }
+      .ab-split-chevron {
+        width: 18px;
+        height: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        color: var(--t1);
+        border-radius: 4px;
+        flex-shrink: 0;
+        transition:
+          background 0.15s,
+          color 0.15s;
+      }
+      .ab-split-chevron:hover {
+        background: var(--sur2);
+        color: var(--acc);
+      }
+      .ab-split-chevron svg {
+        width: 10px;
+        height: 10px;
+        opacity: 0.65;
+      }
+      .ab-split-menu {
+        position: absolute;
+        left: 0;
+        bottom: calc(100% + 8px);
+        min-width: 140px;
+        padding: 6px;
+        background: var(--sur);
+        border: 1px solid var(--b1);
+        border-radius: 8px;
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+        display: none;
+        z-index: 1002;
+      }
+      .ab-split-menu.open {
+        display: block;
+      }
+      .ab-split-menu-item {
+        padding: 8px 10px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--t1);
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .ab-split-menu-item:hover {
+        background: var(--sur2);
+        color: var(--acc);
       }
 
       /* Link Panel */
@@ -12739,8 +12832,318 @@
             </svg>
             Page · Repeaters
           </div>
-          <!-- Section 2: Blank Repeater -->
-          <!-- AUTO-FILL VARIANT -->
+          <!-- Section: Blank Repeater Updated -->
+          <div
+            class="c-section"
+            id="sec-opta-blank-updated"
+            onclick="selEl(event, 'sec-opta-blank-updated')"
+            style="margin: 16px"
+          >
+            <div class="ctx-pill" id="pill-sec-opta-blank-updated"></div>
+            <div class="uc-note">
+              <div class="uc-note-label">Use-case · Updated</div>
+              User drops a plain Repeater onto the canvas — no context, no bindings. All items show
+              identical placeholder content. Intent: the user wants to design the layout first and
+              connect their data source later, or doesn't yet know which collection to use.
+            </div>
+            <div style="padding: 24px 24px 4px">
+              <div
+                style="
+                  font-family:
+                    -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+                  font-weight: 700;
+                  font-size: 18px;
+                  color: var(--t1);
+                  margin-bottom: 4px;
+                "
+              >
+                Blank Repeater (Updated)
+              </div>
+              <div style="font-size: 11px; color: var(--t3); margin-bottom: 12px">
+                Updated proposal: connect the list first, then inspect available item fields without
+                field-row actions.
+              </div>
+            </div>
+            <div
+              class="c-repeater"
+              id="repeater-opta-blank-updated"
+              onclick="selEl(event, 'repeater-opta-blank-updated')"
+              data-no-skeleton="true"
+              style="margin: 0 24px 24px; border-radius: 6px"
+            >
+              <div class="ctx-pill rep-pill" id="pill-repeater-opta-blank-updated"></div>
+              <div class="c-el-overlay"></div>
+              <div class="rep-header" onclick="selElSettings(event, 'repeater-opta-blank-updated')">
+                <span class="rep-icon"
+                  ><svg
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <path
+                      d="M10 6l-1.2 1.2a2.5 2.5 0 0 1-3.6-3.4L6.4 2.6a2.5 2.5 0 0 1 3.5 0l.1.1"
+                    />
+                    <path
+                      d="M6 10l1.2-1.2a2.5 2.5 0 0 1 3.6 3.4l-1.2 1.2a2.5 2.5 0 0 1-3.5 0l-.1-.1"
+                    /></svg
+                ></span>
+                <span class="rep-label">Repeater</span>
+                <span class="rep-count" id="rep-count-opta-blank-updated">— not connected</span>
+                <div
+                  class="rep-bind-btn"
+                  onclick="openFloatingRepeaterBindFlow(event, 'repeater-opta-blank-updated')"
+                  title="Connect to list"
+                >
+                  <svg
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    width="12"
+                    height="12"
+                  >
+                    <circle cx="4.5" cy="3.5" r="2" />
+                    <circle cx="11.5" cy="12.5" r="2" />
+                    <path d="M4.5 5.5C4.5 9 11.5 7 11.5 10.5" />
+                  </svg>
+                </div>
+              </div>
+              <div class="rep-notice">
+                Not connected to data — all items show the same placeholder content.
+                <span
+                  style="text-decoration: underline; cursor: pointer; font-weight: 600"
+                  onclick="openFloatingRepeaterBindFlow(event, 'repeater-opta-blank-updated')"
+                  >Connect data →</span
+                >
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 8px; padding: 8px">
+                <div
+                  class="rep-item"
+                  id="rep-opta-blu-1"
+                  onclick="selEl(event, 'rep-opta-blu-1')"
+                  style="
+                    display: flex;
+                    gap: 16px;
+                    padding: 16px;
+                    border-radius: 8px;
+                    border: 1px solid var(--b1);
+                    cursor: pointer;
+                    position: relative;
+                    align-items: center;
+                  "
+                >
+                  <div class="c-el-overlay"></div>
+                  <div
+                    class="c-el c-el-img"
+                    id="el-opta-blu-thumb-1"
+                    onclick="selEl(event, 'el-opta-blu-thumb-1')"
+                    style="
+                      cursor: pointer;
+                      width: 64px;
+                      height: 64px;
+                      border-radius: 8px;
+                      background: var(--sur2);
+                      border: 1px solid var(--b1);
+                      flex-shrink: 0;
+                      overflow: hidden;
+                    "
+                  >
+                    <div class="c-el-overlay" style="border-radius: 8px"></div>
+                    <div class="el-tags">
+                      <div class="el-type-tag">Image</div>
+                      <div class="el-bind-tag"></div>
+                    </div>
+                  </div>
+                  <div style="flex: 1; min-width: 0">
+                    <div
+                      class="c-el c-el-text"
+                      id="el-opta-blu-title-1"
+                      onclick="selEl(event, 'el-opta-blu-title-1')"
+                      style="cursor: pointer"
+                    >
+                      <div class="c-el-overlay" style="border-radius: 4px"></div>
+                      <div class="el-tags">
+                        <div class="el-type-tag">Text</div>
+                        <div class="el-bind-tag"></div>
+                      </div>
+                      <div
+                        id="v-el-opta-blu-title-1"
+                        style="font-weight: 600; font-size: 14px; color: var(--t1)"
+                      >
+                        Item Title
+                      </div>
+                    </div>
+                    <div
+                      class="c-el c-el-text"
+                      id="el-opta-blu-desc-1"
+                      onclick="selEl(event, 'el-opta-blu-desc-1')"
+                      style="cursor: pointer; margin-top: 2px"
+                    >
+                      <div class="c-el-overlay" style="border-radius: 4px"></div>
+                      <div class="el-tags">
+                        <div class="el-type-tag">Text</div>
+                        <div class="el-bind-tag"></div>
+                      </div>
+                      <div id="v-el-opta-blu-desc-1" style="font-size: 12px; color: var(--t3)">
+                        Description goes here
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div
+                  class="rep-item"
+                  id="rep-opta-blu-2"
+                  onclick="selEl(event, 'rep-opta-blu-2')"
+                  style="
+                    display: flex;
+                    gap: 16px;
+                    padding: 16px;
+                    border-radius: 8px;
+                    border: 1px solid var(--b1);
+                    cursor: pointer;
+                    position: relative;
+                    align-items: center;
+                  "
+                >
+                  <div class="c-el-overlay"></div>
+                  <div
+                    class="c-el c-el-img"
+                    id="el-opta-blu-thumb-2"
+                    onclick="selEl(event, 'el-opta-blu-thumb-2')"
+                    style="
+                      cursor: pointer;
+                      width: 64px;
+                      height: 64px;
+                      border-radius: 8px;
+                      background: var(--sur2);
+                      border: 1px solid var(--b1);
+                      flex-shrink: 0;
+                      overflow: hidden;
+                    "
+                  >
+                    <div class="c-el-overlay" style="border-radius: 8px"></div>
+                    <div class="el-tags">
+                      <div class="el-type-tag">Image</div>
+                      <div class="el-bind-tag"></div>
+                    </div>
+                  </div>
+                  <div style="flex: 1; min-width: 0">
+                    <div
+                      class="c-el c-el-text"
+                      id="el-opta-blu-title-2"
+                      onclick="selEl(event, 'el-opta-blu-title-2')"
+                      style="cursor: pointer"
+                    >
+                      <div class="c-el-overlay" style="border-radius: 4px"></div>
+                      <div class="el-tags">
+                        <div class="el-type-tag">Text</div>
+                        <div class="el-bind-tag"></div>
+                      </div>
+                      <div
+                        id="v-el-opta-blu-title-2"
+                        style="font-weight: 600; font-size: 14px; color: var(--t1)"
+                      >
+                        Item Title
+                      </div>
+                    </div>
+                    <div
+                      class="c-el c-el-text"
+                      id="el-opta-blu-desc-2"
+                      onclick="selEl(event, 'el-opta-blu-desc-2')"
+                      style="cursor: pointer; margin-top: 2px"
+                    >
+                      <div class="c-el-overlay" style="border-radius: 4px"></div>
+                      <div class="el-tags">
+                        <div class="el-type-tag">Text</div>
+                        <div class="el-bind-tag"></div>
+                      </div>
+                      <div id="v-el-opta-blu-desc-2" style="font-size: 12px; color: var(--t3)">
+                        Description goes here
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div
+                  class="rep-item"
+                  id="rep-opta-blu-3"
+                  onclick="selEl(event, 'rep-opta-blu-3')"
+                  style="
+                    display: flex;
+                    gap: 16px;
+                    padding: 16px;
+                    border-radius: 8px;
+                    border: 1px solid var(--b1);
+                    cursor: pointer;
+                    position: relative;
+                    align-items: center;
+                  "
+                >
+                  <div class="c-el-overlay"></div>
+                  <div
+                    class="c-el c-el-img"
+                    id="el-opta-blu-thumb-3"
+                    onclick="selEl(event, 'el-opta-blu-thumb-3')"
+                    style="
+                      cursor: pointer;
+                      width: 64px;
+                      height: 64px;
+                      border-radius: 8px;
+                      background: var(--sur2);
+                      border: 1px solid var(--b1);
+                      flex-shrink: 0;
+                      overflow: hidden;
+                    "
+                  >
+                    <div class="c-el-overlay" style="border-radius: 8px"></div>
+                    <div class="el-tags">
+                      <div class="el-type-tag">Image</div>
+                      <div class="el-bind-tag"></div>
+                    </div>
+                  </div>
+                  <div style="flex: 1; min-width: 0">
+                    <div
+                      class="c-el c-el-text"
+                      id="el-opta-blu-title-3"
+                      onclick="selEl(event, 'el-opta-blu-title-3')"
+                      style="cursor: pointer"
+                    >
+                      <div class="c-el-overlay" style="border-radius: 4px"></div>
+                      <div class="el-tags">
+                        <div class="el-type-tag">Text</div>
+                        <div class="el-bind-tag"></div>
+                      </div>
+                      <div
+                        id="v-el-opta-blu-title-3"
+                        style="font-weight: 600; font-size: 14px; color: var(--t1)"
+                      >
+                        Item Title
+                      </div>
+                    </div>
+                    <div
+                      class="c-el c-el-text"
+                      id="el-opta-blu-desc-3"
+                      onclick="selEl(event, 'el-opta-blu-desc-3')"
+                      style="cursor: pointer; margin-top: 2px"
+                    >
+                      <div class="c-el-overlay" style="border-radius: 4px"></div>
+                      <div class="el-tags">
+                        <div class="el-type-tag">Text</div>
+                        <div class="el-bind-tag"></div>
+                      </div>
+                      <div id="v-el-opta-blu-desc-3" style="font-size: 12px; color: var(--t3)">
+                        Description goes here
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Section: Blank Repeater Auto-fill -->
           <div
             class="c-section"
             id="sec-opta-autofill"
@@ -12802,7 +13205,7 @@
                 <span class="rep-count" id="rep-count-opta-autofill">— not connected</span>
                 <div
                   class="rep-bind-btn"
-                  onclick="openDd(event, 'repeater-opta-autofill', 'Items')"
+                  onclick="openFloatingRepeaterAutoFillFlow(event, 'repeater-opta-autofill')"
                   title="Connect to list"
                 >
                   <svg
@@ -12824,7 +13227,7 @@
                 Not connected to data — all items show the same placeholder content.
                 <span
                   style="text-decoration: underline; cursor: pointer; font-weight: 600"
-                  onclick="openRepCtxPickerAutoFill(event, 'repeater-opta-autofill')"
+                  onclick="openFloatingRepeaterAutoFillFlow(event, 'repeater-opta-autofill')"
                   >Connect data →</span
                 >
               </div>
@@ -13052,6 +13455,7 @@
             </div>
           </div>
 
+          <!-- Section: Blank Repeater Optimized ideas -->
           <div
             class="c-section"
             id="sec-opta-blank"
@@ -13060,7 +13464,7 @@
           >
             <div class="ctx-pill" id="pill-sec-opta-blank"></div>
             <div class="uc-note">
-              <div class="uc-note-label">Use-case</div>
+              <div class="uc-note-label">Use-case · Optimized ideas</div>
               User drops a plain Repeater onto the canvas — no context, no bindings. All items show
               identical placeholder content. Intent: the user wants to design the layout first and
               connect their data source later, or doesn't yet know which collection to use.
@@ -13686,316 +14090,6 @@
             </div>
           </div>
 
-          <!-- Section 2: Blank Repeater -->
-          <div
-            class="c-section"
-            id="sec-opta-blank"
-            onclick="selEl(event, 'sec-opta-blank')"
-            style="margin: 16px"
-          >
-            <div class="ctx-pill" id="pill-sec-opta-blank"></div>
-            <div class="uc-note">
-              <div class="uc-note-label">Use-case</div>
-              User drops a plain Repeater onto the canvas — no context, no bindings. All items show
-              identical placeholder content. Intent: the user wants to design the layout first and
-              connect their data source later, or doesn't yet know which collection to use.
-            </div>
-            <div style="padding: 24px 24px 4px">
-              <div
-                style="
-                  font-family:
-                    -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-                  font-weight: 700;
-                  font-size: 18px;
-                  color: var(--t1);
-                  margin-bottom: 4px;
-                "
-              >
-                Blank Repeater
-              </div>
-              <div style="font-size: 11px; color: var(--t3); margin-bottom: 12px">
-                Added blank from Add Panel. User must select a data source in repeater settings.
-              </div>
-            </div>
-            <div
-              class="c-repeater"
-              id="repeater-opta-blank"
-              onclick="selEl(event, 'repeater-opta-blank')"
-              data-no-skeleton="true"
-              style="margin: 0 24px 24px; border-radius: 6px"
-            >
-              <div class="ctx-pill rep-pill" id="pill-repeater-opta-blank"></div>
-              <div class="c-el-overlay"></div>
-              <div class="rep-header" onclick="selElSettings(event, 'repeater-opta-blank')">
-                <span class="rep-icon"
-                  ><svg
-                    viewBox="0 0 16 16"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
-                    <path
-                      d="M10 6l-1.2 1.2a2.5 2.5 0 0 1-3.6-3.4L6.4 2.6a2.5 2.5 0 0 1 3.5 0l.1.1"
-                    />
-                    <path
-                      d="M6 10l1.2-1.2a2.5 2.5 0 0 1 3.6 3.4l-1.2 1.2a2.5 2.5 0 0 1-3.5 0l-.1-.1"
-                    /></svg
-                ></span>
-                <span class="rep-label">Repeater</span>
-                <span class="rep-count" id="rep-count-opta-blank">— not connected</span>
-                <div
-                  class="rep-bind-btn"
-                  onclick="openDd(event, 'repeater-opta-blank', 'Items')"
-                  title="Connect to list"
-                >
-                  <svg
-                    viewBox="0 0 16 16"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    width="12"
-                    height="12"
-                  >
-                    <circle cx="4.5" cy="3.5" r="2" />
-                    <circle cx="11.5" cy="12.5" r="2" />
-                    <path d="M4.5 5.5C4.5 9 11.5 7 11.5 10.5" />
-                  </svg>
-                </div>
-              </div>
-              <div class="rep-notice">
-                Not connected to data — all items show the same placeholder content.
-                <span
-                  style="text-decoration: underline; cursor: pointer; font-weight: 600"
-                  onclick="openFloatingRepeaterBindFlow(event, 'repeater-opta-blank')"
-                  >Connect data →</span
-                >
-              </div>
-              <div style="display: flex; flex-direction: column; gap: 8px; padding: 8px">
-                <div
-                  class="rep-item"
-                  id="rep-opta-bl-1"
-                  onclick="selEl(event, 'rep-opta-bl-1')"
-                  style="
-                    display: flex;
-                    gap: 16px;
-                    padding: 16px;
-                    border-radius: 8px;
-                    border: 1px solid var(--b1);
-                    cursor: pointer;
-                    position: relative;
-                    align-items: center;
-                  "
-                >
-                  <div class="c-el-overlay"></div>
-                  <div
-                    class="c-el c-el-img"
-                    id="el-opta-bl-thumb-1"
-                    onclick="selEl(event, 'el-opta-bl-thumb-1')"
-                    style="
-                      cursor: pointer;
-                      width: 64px;
-                      height: 64px;
-                      border-radius: 8px;
-                      background: var(--sur2);
-                      border: 1px solid var(--b1);
-                      flex-shrink: 0;
-                      overflow: hidden;
-                    "
-                  >
-                    <div class="c-el-overlay" style="border-radius: 8px"></div>
-                    <div class="el-tags">
-                      <div class="el-type-tag">Image</div>
-                      <div class="el-bind-tag"></div>
-                    </div>
-                  </div>
-                  <div style="flex: 1; min-width: 0">
-                    <div
-                      class="c-el c-el-text"
-                      id="el-opta-bl-title-1"
-                      onclick="selEl(event, 'el-opta-bl-title-1')"
-                      style="cursor: pointer"
-                    >
-                      <div class="c-el-overlay" style="border-radius: 4px"></div>
-                      <div class="el-tags">
-                        <div class="el-type-tag">Text</div>
-                        <div class="el-bind-tag"></div>
-                      </div>
-                      <div
-                        id="v-el-opta-bl-title-1"
-                        style="font-weight: 600; font-size: 14px; color: var(--t1)"
-                      >
-                        Item Title
-                      </div>
-                    </div>
-                    <div
-                      class="c-el c-el-text"
-                      id="el-opta-bl-desc-1"
-                      onclick="selEl(event, 'el-opta-bl-desc-1')"
-                      style="cursor: pointer; margin-top: 2px"
-                    >
-                      <div class="c-el-overlay" style="border-radius: 4px"></div>
-                      <div class="el-tags">
-                        <div class="el-type-tag">Text</div>
-                        <div class="el-bind-tag"></div>
-                      </div>
-                      <div id="v-el-opta-bl-desc-1" style="font-size: 12px; color: var(--t3)">
-                        Description goes here
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div
-                  class="rep-item"
-                  id="rep-opta-bl-2"
-                  onclick="selEl(event, 'rep-opta-bl-2')"
-                  style="
-                    display: flex;
-                    gap: 16px;
-                    padding: 16px;
-                    border-radius: 8px;
-                    border: 1px solid var(--b1);
-                    cursor: pointer;
-                    position: relative;
-                    align-items: center;
-                  "
-                >
-                  <div class="c-el-overlay"></div>
-                  <div
-                    class="c-el c-el-img"
-                    id="el-opta-bl-thumb-2"
-                    onclick="selEl(event, 'el-opta-bl-thumb-2')"
-                    style="
-                      cursor: pointer;
-                      width: 64px;
-                      height: 64px;
-                      border-radius: 8px;
-                      background: var(--sur2);
-                      border: 1px solid var(--b1);
-                      flex-shrink: 0;
-                      overflow: hidden;
-                    "
-                  >
-                    <div class="c-el-overlay" style="border-radius: 8px"></div>
-                    <div class="el-tags">
-                      <div class="el-type-tag">Image</div>
-                      <div class="el-bind-tag"></div>
-                    </div>
-                  </div>
-                  <div style="flex: 1; min-width: 0">
-                    <div
-                      class="c-el c-el-text"
-                      id="el-opta-bl-title-2"
-                      onclick="selEl(event, 'el-opta-bl-title-2')"
-                      style="cursor: pointer"
-                    >
-                      <div class="c-el-overlay" style="border-radius: 4px"></div>
-                      <div class="el-tags">
-                        <div class="el-type-tag">Text</div>
-                        <div class="el-bind-tag"></div>
-                      </div>
-                      <div
-                        id="v-el-opta-bl-title-2"
-                        style="font-weight: 600; font-size: 14px; color: var(--t1)"
-                      >
-                        Item Title
-                      </div>
-                    </div>
-                    <div
-                      class="c-el c-el-text"
-                      id="el-opta-bl-desc-2"
-                      onclick="selEl(event, 'el-opta-bl-desc-2')"
-                      style="cursor: pointer; margin-top: 2px"
-                    >
-                      <div class="c-el-overlay" style="border-radius: 4px"></div>
-                      <div class="el-tags">
-                        <div class="el-type-tag">Text</div>
-                        <div class="el-bind-tag"></div>
-                      </div>
-                      <div id="v-el-opta-bl-desc-2" style="font-size: 12px; color: var(--t3)">
-                        Description goes here
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div
-                  class="rep-item"
-                  id="rep-opta-bl-3"
-                  onclick="selEl(event, 'rep-opta-bl-3')"
-                  style="
-                    display: flex;
-                    gap: 16px;
-                    padding: 16px;
-                    border-radius: 8px;
-                    border: 1px solid var(--b1);
-                    cursor: pointer;
-                    position: relative;
-                    align-items: center;
-                  "
-                >
-                  <div class="c-el-overlay"></div>
-                  <div
-                    class="c-el c-el-img"
-                    id="el-opta-bl-thumb-3"
-                    onclick="selEl(event, 'el-opta-bl-thumb-3')"
-                    style="
-                      cursor: pointer;
-                      width: 64px;
-                      height: 64px;
-                      border-radius: 8px;
-                      background: var(--sur2);
-                      border: 1px solid var(--b1);
-                      flex-shrink: 0;
-                      overflow: hidden;
-                    "
-                  >
-                    <div class="c-el-overlay" style="border-radius: 8px"></div>
-                    <div class="el-tags">
-                      <div class="el-type-tag">Image</div>
-                      <div class="el-bind-tag"></div>
-                    </div>
-                  </div>
-                  <div style="flex: 1; min-width: 0">
-                    <div
-                      class="c-el c-el-text"
-                      id="el-opta-bl-title-3"
-                      onclick="selEl(event, 'el-opta-bl-title-3')"
-                      style="cursor: pointer"
-                    >
-                      <div class="c-el-overlay" style="border-radius: 4px"></div>
-                      <div class="el-tags">
-                        <div class="el-type-tag">Text</div>
-                        <div class="el-bind-tag"></div>
-                      </div>
-                      <div
-                        id="v-el-opta-bl-title-3"
-                        style="font-weight: 600; font-size: 14px; color: var(--t1)"
-                      >
-                        Item Title
-                      </div>
-                    </div>
-                    <div
-                      class="c-el c-el-text"
-                      id="el-opta-bl-desc-3"
-                      onclick="selEl(event, 'el-opta-bl-desc-3')"
-                      style="cursor: pointer; margin-top: 2px"
-                    >
-                      <div class="c-el-overlay" style="border-radius: 4px"></div>
-                      <div class="el-tags">
-                        <div class="el-type-tag">Text</div>
-                        <div class="el-bind-tag"></div>
-                      </div>
-                      <div id="v-el-opta-bl-desc-3" style="font-size: 12px; color: var(--t3)">
-                        Description goes here
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
           <!-- Section 3: UoU - External Controls -->
           <div
             class="c-section"
@@ -30198,6 +30292,143 @@
             { k: 'Visible', t: 'boolean' },
           ],
         },
+        'sec-opta-blank-updated': {
+          name: 'Section · Blank Updated',
+          type: 'Section',
+          isContainer: true,
+          page: 'option-a',
+          parentPage: 'page-opta',
+          props: [],
+        },
+        'repeater-opta-blank-updated': {
+          name: 'Repeater',
+          type: 'Repeater',
+          section: 'sec-opta-blank-updated',
+          isRepeater: true,
+          contextModel: 'on-repeater',
+          readOnlyItemFields: true,
+          props: [
+            { k: 'Items', t: 'list' },
+            { k: 'Visible', t: 'boolean' },
+            { k: 'onItemReady', t: 'function' },
+            { k: 'onItemRemoved', t: 'function' },
+            { k: 'onMouseIn', t: 'function' },
+            { k: 'onMouseOut', t: 'function' },
+            { k: 'onViewportEnter', t: 'function' },
+            { k: 'onViewportLeave', t: 'function' },
+          ],
+        },
+        'rep-opta-blu-1': {
+          name: 'Item 1',
+          type: 'RepItem',
+          section: 'sec-opta-blank-updated',
+          isRepItem: true,
+          props: [],
+        },
+        'rep-opta-blu-2': {
+          name: 'Item 2',
+          type: 'RepItem',
+          section: 'sec-opta-blank-updated',
+          isRepItem: true,
+          props: [],
+        },
+        'rep-opta-blu-3': {
+          name: 'Item 3',
+          type: 'RepItem',
+          section: 'sec-opta-blank-updated',
+          isRepItem: true,
+          props: [],
+        },
+        'el-opta-blu-title-1': {
+          name: 'Title',
+          type: 'Text',
+          section: 'sec-opta-blank-updated',
+          repTemplate: 'el-opta-blu-title',
+          props: [
+            { k: 'Value', t: 'string' },
+            { k: 'Visible', t: 'boolean' },
+          ],
+        },
+        'el-opta-blu-title-2': {
+          name: 'Title',
+          type: 'Text',
+          section: 'sec-opta-blank-updated',
+          repTemplate: 'el-opta-blu-title',
+          props: [
+            { k: 'Value', t: 'string' },
+            { k: 'Visible', t: 'boolean' },
+          ],
+        },
+        'el-opta-blu-title-3': {
+          name: 'Title',
+          type: 'Text',
+          section: 'sec-opta-blank-updated',
+          repTemplate: 'el-opta-blu-title',
+          props: [
+            { k: 'Value', t: 'string' },
+            { k: 'Visible', t: 'boolean' },
+          ],
+        },
+        'el-opta-blu-desc-1': {
+          name: 'Description',
+          type: 'Text',
+          section: 'sec-opta-blank-updated',
+          repTemplate: 'el-opta-blu-desc',
+          props: [
+            { k: 'Value', t: 'string' },
+            { k: 'Visible', t: 'boolean' },
+          ],
+        },
+        'el-opta-blu-desc-2': {
+          name: 'Description',
+          type: 'Text',
+          section: 'sec-opta-blank-updated',
+          repTemplate: 'el-opta-blu-desc',
+          props: [
+            { k: 'Value', t: 'string' },
+            { k: 'Visible', t: 'boolean' },
+          ],
+        },
+        'el-opta-blu-desc-3': {
+          name: 'Description',
+          type: 'Text',
+          section: 'sec-opta-blank-updated',
+          repTemplate: 'el-opta-blu-desc',
+          props: [
+            { k: 'Value', t: 'string' },
+            { k: 'Visible', t: 'boolean' },
+          ],
+        },
+        'el-opta-blu-thumb-1': {
+          name: 'Image',
+          type: 'Image',
+          section: 'sec-opta-blank-updated',
+          repTemplate: 'el-opta-blu-thumb',
+          props: [
+            { k: 'Source', t: 'image' },
+            { k: 'Visible', t: 'boolean' },
+          ],
+        },
+        'el-opta-blu-thumb-2': {
+          name: 'Image',
+          type: 'Image',
+          section: 'sec-opta-blank-updated',
+          repTemplate: 'el-opta-blu-thumb',
+          props: [
+            { k: 'Source', t: 'image' },
+            { k: 'Visible', t: 'boolean' },
+          ],
+        },
+        'el-opta-blu-thumb-3': {
+          name: 'Image',
+          type: 'Image',
+          section: 'sec-opta-blank-updated',
+          repTemplate: 'el-opta-blu-thumb',
+          props: [
+            { k: 'Source', t: 'image' },
+            { k: 'Visible', t: 'boolean' },
+          ],
+        },
         'sec-opta-uou': {
           name: 'Section · UoU',
           type: 'Section',
@@ -33552,6 +33783,8 @@
           'repeater-opta-prebound': ['cms-articles'],
           'sec-opta-blank': [],
           'repeater-opta-blank': [],
+          'sec-opta-blank-updated': [],
+          'repeater-opta-blank-updated': [],
           'sec-opta-uou': [],
           'repeater-opta-uou': ['cms-articles'],
           'sec-opta-zero': [],
@@ -35400,6 +35633,8 @@
           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>',
         chevronLeft:
           '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>',
+        chevronDown:
+          '<svg viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 1 5 5 9 1"/></svg>',
       };
 
       const ACTION_BAR_CONFIG = {
@@ -35430,6 +35665,194 @@
         toggle.style.pointerEvents = hideForFloatingCtx ? 'none' : 'auto';
       }
 
+      function isElementWithinRepeater(elId, def) {
+        if (!def || def.isRepeater || def.isRepItem || def.type === 'Repeater') return false;
+        if (def.repTemplate) return true;
+        const el = document.getElementById(elId);
+        return !!el?.closest('.c-repeater');
+      }
+
+      function getPrimaryBindableProp(def) {
+        if (!def?.props?.length) return null;
+        const preferred = {
+          Text: 'Value',
+          Image: 'Source',
+          Button: 'Label',
+          Icon: 'Alt Text',
+        }[def.type];
+        if (preferred && def.props.some((p) => p.k === preferred)) return preferred;
+        const prop = def.props.find(
+          (p) => !['Visible', 'Link', 'Click Action'].includes(p.k) && p.t !== 'function',
+        );
+        return prop ? prop.k : null;
+      }
+
+      function getRepeaterElementFallbackAction(def) {
+        const config = ACTION_BAR_CONFIG[def.type] || [];
+        return config.find((a) => a.label) || null;
+      }
+
+      function closeRepElementActionMenu() {
+        document.getElementById('rep-element-action-menu')?.classList.remove('open');
+      }
+
+      function toggleRepElementActionMenu(e) {
+        if (e) e.stopPropagation();
+        const menu = document.getElementById('rep-element-action-menu');
+        if (!menu) return;
+        menu.classList.toggle('open');
+      }
+
+      function actionConnectSelectedElementData(e) {
+        if (e) e.stopPropagation();
+        closeActionBarAiMenu();
+        closeRepElementActionMenu();
+        if (!S.sel) return;
+        const def = EL_DEFS[S.sel];
+        const propKey = getPrimaryBindableProp(def);
+        if (!propKey) return;
+        const parentRepId = getParentRepeaterId(S.sel);
+        if (parentRepId && !S.bindings[parentRepId + '|Items']) {
+          actionConnectRepeaterData(e || { stopPropagation: function () {} });
+          return;
+        }
+        openDd(e || { stopPropagation: function () {} }, S.sel, propKey);
+      }
+
+      function renderRepeaterElementConnectAction(def) {
+        const fallback = getRepeaterElementFallbackAction(def);
+        const fallbackLabel = fallback?.label || 'Edit';
+        const fallbackClick = fallback?.action
+          ? `event.stopPropagation();closeRepElementActionMenu();${fallback.action}()`
+          : 'event.stopPropagation();closeRepElementActionMenu()';
+        return `<div class="action-bar-text ab-split-action" onclick="actionConnectSelectedElementData(event)">
+          <span>Connect data</span>
+          <span class="ab-split-chevron" onclick="toggleRepElementActionMenu(event)" title="More actions">${ACTION_BAR_ICONS.chevronDown}</span>
+          <div class="ab-split-menu" id="rep-element-action-menu">
+            <div class="ab-split-menu-item" onclick="${fallbackClick}">${fallbackLabel}</div>
+          </div>
+        </div>`;
+      }
+
+      function closeActionBarAiMenu() {
+        document
+          .querySelectorAll('.ab-ai-menu.open')
+          .forEach((menu) => menu.classList.remove('open'));
+      }
+
+      function toggleActionBarAiMenu(e) {
+        if (e) e.stopPropagation();
+        const menu = e?.currentTarget?.querySelector('.ab-ai-menu');
+        if (!menu) return;
+        const wasOpen = menu.classList.contains('open');
+        closeActionBarAiMenu();
+        if (!wasOpen) menu.classList.add('open');
+      }
+
+      function getActionBarAiRepeaterId() {
+        if (!S.sel) return null;
+        const def = EL_DEFS[S.sel];
+        if (def?.isRepeater || def?.type === 'Repeater') return S.sel;
+        return getParentRepeaterId(S.sel);
+      }
+
+      function actionOpenAiAssistant(e) {
+        if (e) e.stopPropagation();
+        closeActionBarAiMenu();
+        const lp = document.querySelector('.lp');
+        const btn = document.getElementById('ai-toggle');
+        if (!lp) return;
+        lp.classList.remove('collapsed');
+        btn?.classList.add('active');
+      }
+
+      function actionCreateNewCollection(e) {
+        if (e) e.stopPropagation();
+        closeActionBarAiMenu();
+        toast('Create new CMS collection...');
+      }
+
+      function actionAddElementsFromCollection(e) {
+        if (e) e.stopPropagation();
+        closeActionBarAiMenu();
+        const repId = getActionBarAiRepeaterId();
+        if (!repId) return;
+        if (!S.bindings[repId + '|Items']) {
+          openFloatingRepeaterBindFlow(e || { stopPropagation: function () {} }, repId);
+          return;
+        }
+        openAiInsertFields(repId);
+      }
+
+      function actionReplaceRepeaterCollectionSource(e) {
+        if (e) e.stopPropagation();
+        closeActionBarAiMenu();
+        const repId = getActionBarAiRepeaterId();
+        if (!repId) return;
+        openFloatingRepeaterBindFlow(e || { stopPropagation: function () {} }, repId);
+      }
+
+      function getActionBarAiMenuItems() {
+        const def = S.sel ? EL_DEFS[S.sel] : null;
+        if (def?.isRepeater || def?.type === 'Repeater') {
+          const isConnected = !!S.bindings[S.sel + '|Items'];
+          return isConnected
+            ? [
+                {
+                  label: 'Add elements from collections',
+                  action: 'actionAddElementsFromCollection(event)',
+                },
+                {
+                  label: 'Replace collection source',
+                  action: 'actionReplaceRepeaterCollectionSource(event)',
+                },
+              ]
+            : [
+                { label: 'Connect to collection', action: 'actionConnectRepeaterData(event)' },
+                { label: 'Create new collection', action: 'actionCreateNewCollection(event)' },
+              ];
+        }
+        if (isElementWithinRepeater(S.sel, def)) {
+          return [
+            {
+              label: 'Connect element to data',
+              action: 'actionConnectSelectedElementData(event)',
+            },
+          ];
+        }
+        if (def?.isRepItem) {
+          const parentRepId = getParentRepeaterId(S.sel);
+          const isConnected = !!(parentRepId && S.bindings[parentRepId + '|Items']);
+          return isConnected
+            ? [
+                {
+                  label: 'Add elements from collections',
+                  action: 'actionAddElementsFromCollection(event)',
+                },
+                {
+                  label: 'Connect element to data',
+                  action: 'event.stopPropagation();closeActionBarAiMenu();actionSettings()',
+                },
+              ]
+            : [{ label: 'Connect to collection', action: 'actionConnectRepeaterData(event)' }];
+        }
+        return [{ label: 'Open AI assistant', action: 'actionOpenAiAssistant(event)' }];
+      }
+
+      function renderActionBarAiControl() {
+        const items = getActionBarAiMenuItems();
+        const menuItems = items
+          .map(
+            (item) =>
+              `<div class="ab-ai-menu-item" onclick="${item.action}">${item.label}</div>`,
+          )
+          .join('');
+        return `<div class="action-bar-icon ab-ai-action" title="AI actions" onclick="toggleActionBarAiMenu(event)">
+          ${ACTION_BAR_ICONS.ai}
+          <div class="ab-ai-menu" onclick="event.stopPropagation()">${menuItems}</div>
+        </div>`;
+      }
+
       function renderActionBar() {
         const bar = document.getElementById('action-bar');
 
@@ -35439,7 +35862,8 @@
           const ctx = findSource(S.ctxSettingsView);
           const isMultiArray = (ctx?.config || []).some((c) => c.nested);
           if (isMultiArray) {
-            let html = '';
+            let html = renderActionBarAiControl();
+            html += '<div class="action-bar-sep"></div>';
             if (level === 1) {
               html += `<div class="action-bar-text" onclick="actionManageItems()">Connect Fields</div>`;
               html += '<div class="action-bar-sep"></div>';
@@ -35474,7 +35898,7 @@
         if (def.type === 'Repeater') {
           const isConnected = !!S.bindings[S.sel + '|Items'];
           let html = '';
-          html += `<div class="action-bar-icon" title="AI assistant" style="color:var(--acc)">${ACTION_BAR_ICONS.ai}</div>`;
+          html += renderActionBarAiControl();
           html += '<div class="action-bar-sep"></div>';
           html += `<div class="action-bar-text" onclick="${isConnected ? 'actionManageItems()' : 'actionConnectRepeaterData(event)'}">${isConnected ? 'Connect fields' : 'Connect to data'}</div>`;
           html += `<div class="action-bar-text" onclick="actionDesign()">Change Layout</div>`;
@@ -35501,7 +35925,7 @@
           const parentRepId = getParentRepeaterId(S.sel);
           const isConnected = !!(parentRepId && S.bindings[parentRepId + '|Items']);
           let html = '';
-          html += `<div class="action-bar-icon" title="AI assistant" style="color:var(--acc)">${ACTION_BAR_ICONS.ai}</div>`;
+          html += renderActionBarAiControl();
           html += '<div class="action-bar-sep"></div>';
           html += isConnected
             ? `<div class="action-bar-text" onclick="actionSettings()">Connect fields</div>`
@@ -35520,14 +35944,22 @@
 
         const actions = ACTION_BAR_CONFIG[def.type];
         if (!actions) {
-          bar.classList.remove('open');
+          let html = renderActionBarAiControl();
+          html += '<div class="action-bar-sep"></div>';
+          html += `<div class="action-bar-icon">${ACTION_BAR_ICONS.comment}</div>`;
+          html += `<div class="action-bar-icon">${ACTION_BAR_ICONS.help}</div>`;
+          html += `<div class="action-bar-icon" onclick="actionSettings()">${ACTION_BAR_ICONS.settings}</div>`;
+          html += `<div class="action-bar-icon">${ACTION_BAR_ICONS.more}</div>`;
+          bar.innerHTML = html;
+          bar.classList.add('open');
           updateInspectorToggle();
           return;
         }
 
-        const chevronSvg =
-          '<svg viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 1 5 5 9 1"/></svg>';
-        let html = '';
+        const chevronSvg = ACTION_BAR_ICONS.chevronDown;
+        const repElementActionsDefaultToConnect = isElementWithinRepeater(S.sel, def);
+        let html = renderActionBarAiControl();
+        html += '<div class="action-bar-sep"></div>';
         actions.forEach((a, i) => {
           if (i > 0) html += '<div class="action-bar-sep"></div>';
           if (a.type === 'textDesign') {
@@ -35543,7 +35975,10 @@
               : a.action
                 ? ` onclick="${a.action}()"`
                 : '';
-            html += `<div class="action-bar-text"${click}>${a.label}</div>`;
+            html +=
+              repElementActionsDefaultToConnect && i === 0
+                ? renderRepeaterElementConnectAction(def)
+                : `<div class="action-bar-text"${click}>${a.label}</div>`;
           }
         });
         html += '<div class="action-bar-sep"></div>';
@@ -35801,6 +36236,7 @@
 
       function actionConnectRepeaterData(e) {
         if (e) e.stopPropagation();
+        closeActionBarAiMenu();
         if (!S.sel) return;
         const def = EL_DEFS[S.sel];
         const repId = def?.isRepeater ? S.sel : getParentRepeaterId(S.sel);
@@ -36056,6 +36492,7 @@
           exitTextEditing();
           closeLinkPanel();
           closeEtPanel();
+          closeActionBarAiMenu();
           S.sel = null;
           updateSelectionVisual(null);
           renderRP();
@@ -36186,6 +36623,22 @@
         openRepCtxPicker(repeaterId);
       }
 
+      function ensureRepeaterStageNotice(repId) {
+        const repEl = document.getElementById(repId);
+        if (!repEl) return;
+        let notice = repEl.querySelector(':scope > .rep-notice');
+        if (!notice) {
+          notice = document.createElement('div');
+          notice.className = 'rep-notice';
+          notice.innerHTML = `Not connected to data — all items show the same placeholder content.
+            <span style="text-decoration: underline; cursor: pointer; font-weight: 600" onclick="openFloatingRepeaterBindFlow(event, '${repId}')">Connect data →</span>`;
+          const header = repEl.querySelector(':scope > .rep-header');
+          if (header) header.insertAdjacentElement('afterend', notice);
+          else repEl.prepend(notice);
+        }
+        notice.style.display = '';
+      }
+
       function openRepeaterItemsPanel(e, repId, opts) {
         if (e) e.stopPropagation();
         const options = opts || {};
@@ -36225,6 +36678,7 @@
           if (S.dd && S.dd.elId === repId && S.dd.propKey === 'Items') {
             S.dd._itemsOnly = true;
             S.dd._openInspectorAfterBind = options.openInspectorAfterBind === true;
+            S.dd._autoFillAfterBind = options.autoFillAfterBind === true;
           }
         }, options.openInspectorBefore ? 60 : 0);
       }
@@ -36234,6 +36688,15 @@
         openRepeaterItemsPanel(e, repId, {
           openInspectorBefore: false,
           openInspectorAfterBind: true,
+        });
+      }
+
+      // Blank-repeater auto-fill flow: use the floating picker, then populate item fields.
+      function openFloatingRepeaterAutoFillFlow(e, repId) {
+        openRepeaterItemsPanel(e, repId, {
+          openInspectorBefore: false,
+          openInspectorAfterBind: true,
+          autoFillAfterBind: true,
         });
       }
 
@@ -36802,6 +37265,18 @@
         );
         const repEventsHtml = renderEventHandlers(repId, def);
 
+        function isReadOnlyItemFieldsRepeater(id) {
+          return !!EL_DEFS[id]?.readOnlyItemFields;
+        }
+
+        function renderAiFieldHelpCta(id) {
+          return `<div onclick="openAiInsertFields('${id}')"
+            style="padding:7px 10px;border-radius:6px;border:1px solid color-mix(in srgb,#6c47ff 30%,var(--b1));background:color-mix(in srgb,#6c47ff 6%,var(--bg));color:#6c47ff;font-size:11px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:.15s"
+            onmouseenter="this.style.background='color-mix(in srgb,#6c47ff 12%,var(--bg))'" onmouseleave="this.style.background='color-mix(in srgb,#6c47ff 6%,var(--bg))'">
+            <span style="font-size:12px">✨</span> Let Aria help you connect fields
+          </div>`;
+        }
+
         const sectionId = def.section;
         const repCtxIds = S.ctxMap[repId] || [];
         const isPromoted = repCtxIds.some((id) => (S.ctxMap[sectionId] || []).includes(id));
@@ -36909,6 +37384,9 @@
         // Build "Suggested fields" section — only when connected, and not for auto-fill repeaters
         let suggestedFieldsHtml = '';
         if (b && ctx && !def.autoFill) {
+          if (isReadOnlyItemFieldsRepeater(repId)) {
+            suggestedFieldsHtml = `<div style="padding:10px 0 4px">${renderAiFieldHelpCta(repId)}</div>`;
+          } else {
           // Resolve item fields from the context
           let _itemFields = [];
           function _findFieldDeep(fields, name) {
@@ -37008,6 +37486,7 @@
                 </div>
               </div>`;
           }
+          }
         }
 
         const promoteHtml =
@@ -37025,6 +37504,13 @@
           <span>✓</span> Context promoted to section — UoU controls can access it
         </div>`
               : '';
+        const disconnectedItemsNote = !b
+          ? `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin-top:8px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px">
+          <span style="font-size:14px;flex-shrink:0">⚠️</span>
+          <div style="font-size:10px;color:#856404;line-height:1.4;flex:1">This repeater is <b>not showing data yet</b>. Connect it to a list to display real items.</div>
+          <span style="flex-shrink:0;padding:4px 10px;background:#856404;color:#fff;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap" onclick="openInspectorBindFlow(event,'${repId}')">Connect to data</span>
+        </div>`
+          : '';
 
         return `<div class="rp-cat ${S.openCats.context ? 'open' : ''}" id="rp-cat-context">
     <div class="rp-cat-head" onclick="toggleCat('context')">
@@ -37061,6 +37547,7 @@
           </div>
         </div>
       </div>
+      ${disconnectedItemsNote}
       ${b && ctx && def.itemsConfigMode ? renderItemsParams(repId, b, ctx) : ''}
       ${suggestedFieldsHtml}
     </div>
@@ -37109,8 +37596,7 @@
         }
         def.repCtxId = null;
         def.repArrayField = null;
-        const notice = repEl?.querySelector('.rep-notice');
-        if (notice) notice.style.display = '';
+        ensureRepeaterStageNotice(repId);
         refreshAllPills();
         renderBody();
       }
@@ -38097,10 +38583,12 @@
         });
         // Select the first added element and open inspector
         S.sel = newId;
+        S.ctxSettingsView = null;
         S.tab = 'design';
         S.inspectorOpen = true;
         updateSelectionVisual(newId);
         renderRP();
+        renderActionBar();
         toast('Added ' + (isImage ? 'Image' : 'Text') + ' to all items');
       }
 
@@ -38510,6 +38998,7 @@
                   (id) => EL_DEFS[id].isRepeater && EL_DEFS[id].section === def.section,
                 );
           const itemsBinding = parentRepId ? S.bindings[parentRepId + '|Items'] : null;
+          const readOnlyItemFields = !!EL_DEFS[parentRepId]?.readOnlyItemFields;
           let dataHtml = '';
           if (itemsBinding) {
             const ctx = findSource(itemsBinding.ctxId);
@@ -38577,6 +39066,20 @@
                 const inUseBadge = isAdded
                   ? `<span style="flex-shrink:0;padding:2px 7px;border-radius:10px;background:#fce4ec;color:#c2185b;font-size:9px;font-weight:600;letter-spacing:.3px;text-transform:uppercase">In use</span>`
                   : '';
+                if (readOnlyItemFields) {
+                  return `<div class="field-card"
+                style="border-radius:8px;border:1px solid var(--b2);background:var(--sur);overflow:hidden;cursor:default">
+                <div style="display:flex;align-items:center;gap:8px;padding:7px 10px">
+                  <span style="width:24px;height:24px;border-radius:5px;background:var(--b1);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--t2)">
+                    ${icon}
+                  </span>
+                  <div style="flex:1;min-width:0">
+                    <div style="font-size:11px;font-weight:500;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</div>
+                    <div style="font-size:10px;color:var(--t3);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${sampleText || f.type || 'field'}</div>
+                  </div>
+                </div>
+              </div>`;
+                }
                 return `<div class="field-card" data-rep-id="${parentRepId}" data-fname="${f.name}" data-ftype="${f.type}"
                 onclick="addFieldToRepItem('${parentRepId}','${f.name}','${f.type}')"
                 style="border-radius:8px;border:1px solid var(--b2);background:var(--sur);transition:.15s;overflow:hidden;cursor:pointer">
@@ -38599,20 +39102,46 @@
               })
               .join('');
             dataHtml = `
-        <div style="margin-top:2px">
+        <div>
           <div style="margin-bottom:10px">
             <div style="font-size:13px;font-weight:600;color:var(--t1);margin-bottom:2px">${ctxName}</div>
-            <div style="font-size:11px;color:var(--t3);line-height:1.4">These fields are exposed from the ${ctxName} context. Click a field to add it to every item as a bound element.</div>
+            <div style="font-size:11px;color:var(--t3);line-height:1.4">${
+              readOnlyItemFields
+                ? `These are the fields available inside ${ctxName} · ${arrayField}.`
+                : `These fields are exposed from the ${ctxName} context. Click a field to add it to every item as a bound element.`
+            }</div>
           </div>
           ${
             itemFields.length > 0
               ? `<div style="display:flex;flex-direction:column;gap:4px">${fieldCards}</div>`
               : `<div style="font-size:11px;color:var(--t3)">No fields available</div>`
           }
+          ${
+            readOnlyItemFields
+              ? `<div onclick="openAiInsertFields('${parentRepId}')"
+                  style="margin-top:8px;padding:7px 10px;border-radius:6px;border:1px solid color-mix(in srgb,#6c47ff 30%,var(--b1));background:color-mix(in srgb,#6c47ff 6%,var(--bg));color:#6c47ff;font-size:11px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:.15s"
+                  onmouseenter="this.style.background='color-mix(in srgb,#6c47ff 12%,var(--bg))'" onmouseleave="this.style.background='color-mix(in srgb,#6c47ff 6%,var(--bg))'">
+                  <span style="font-size:12px">✨</span> Let Aria help you connect fields
+                </div>`
+              : ''
+          }
         </div>`;
           } else {
+            if (closestRep) {
+              let stageNotice = closestRep.querySelector(':scope > .rep-notice');
+              if (!stageNotice) {
+                stageNotice = document.createElement('div');
+                stageNotice.className = 'rep-notice';
+                stageNotice.innerHTML = `Not connected to data — all items show the same placeholder content.
+                <span style="text-decoration: underline; cursor: pointer; font-weight: 600" onclick="openFloatingRepeaterBindFlow(event, '${parentRepId}')">Connect data →</span>`;
+                const repHeader = closestRep.querySelector(':scope > .rep-header');
+                if (repHeader) repHeader.insertAdjacentElement('afterend', stageNotice);
+                else closestRep.prepend(stageNotice);
+              }
+              stageNotice.style.display = '';
+            }
             dataHtml = `
-        <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin-top:4px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px">
+        <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px">
           <span style="font-size:14px;flex-shrink:0">⚠️</span>
           <div style="font-size:10px;color:#856404;line-height:1.4;flex:1">This repeater is <b>not showing data yet</b>. Connect it to a list to display real items.</div>
           <span style="flex-shrink:0;padding:4px 10px;background:#856404;color:#fff;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap" onclick="openInspectorBindFlow(event,'${parentRepId}')">Connect to data</span>
@@ -38645,11 +39174,16 @@
       </div>
       <div class="rp-cat-body">${repItemEventRows}</div>
     </div>`;
-          return `<div class="ps">
-      <div class="ps-lbl">Repeater Item ${idx}</div>
-      ${dataHtml}
+          return `<div class="rp-cat ${S.openCats.properties ? 'open' : ''}" id="rp-cat-properties">
+      <div class="rp-cat-head" onclick="toggleCat('properties')">
+        <span class="rp-cat-chevron">›</span>
+        <span class="rp-cat-title">Properties</span>
+      </div>
+      <div class="rp-cat-body">
+        ${dataHtml}
+      </div>
     </div>
-    ${repItemEventsHtml}`;
+    ${readOnlyItemFields ? '' : repItemEventsHtml}`;
         }
         if (def.isPage) {
           return renderSettingsWithCategories(
@@ -38680,7 +39214,7 @@
           } else {
             templateNote = `<div style="display:flex;align-items:center;gap:6px;padding:8px 10px;margin-bottom:8px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px">
         <span style="font-size:14px">⚠️</span>
-        <div style="font-size:10px;color:#856404;line-height:1.4">The parent repeater is not connected to data. Bindings are preserved but all items will show <b>the same content</b> — connect the repeater to an array to iterate.</div>
+        <div style="font-size:10px;color:#856404;line-height:1.4"><b>Repeater Is Disconnected</b><br>This repeater is not connected to data yet. Connect it to a list so each item can show different content.</div>
       </div>`;
           }
         }
@@ -39485,6 +40019,7 @@
             container.innerHTML = templateItemHTML + templateItemHTML + templateItemHTML;
           }
           container?.querySelectorAll('.rep-unconnected-warn').forEach((el) => el.remove());
+          ensureRepeaterStageNotice(repId);
           syncRepVisualItems(repId);
         });
 
@@ -40168,6 +40703,104 @@
         const ctx = findSource(b.ctxId);
         const isNested = !!repEl.parentElement?.closest('.c-repeater');
         let targetCount = isNested ? baseCount : ctx?.itemCount || baseCount;
+        const def = EL_DEFS[repeaterId];
+        const sectionId = def?.section;
+        const hasInnerBindings =
+          sectionId &&
+          Object.keys(S.bindings).some((bk) => {
+            const [elId] = bk.split('|');
+            const d = EL_DEFS[elId];
+            return d && d.section === sectionId && d.repTemplate;
+          });
+        // Resolve sample data — for nested multiReference, use the referenced collection's sample data
+        let sampleData = [];
+        if (hasInnerBindings) {
+          const ctx2 = findSource(b.ctxId);
+          if (ctx2 && b.fieldName) {
+            const arrResult = findArrayFieldDeep(ctx2.fields, b.fieldName);
+            if (
+              arrResult &&
+              arrResult.field.type === 'multiReference' &&
+              arrResult.field.referencedCollection
+            ) {
+              sampleData = REP_SAMPLE_DATA[arrResult.field.referencedCollection] || [];
+            }
+          }
+        }
+        if (sampleData.length === 0) sampleData = REP_SAMPLE_DATA[b.ctxId] || [];
+        function rowValue(row, fieldName) {
+          if (!row || !fieldName) return undefined;
+          if (row[fieldName] !== undefined) return row[fieldName];
+          if (fieldName.includes('.')) {
+            const parts = fieldName.split('.');
+            let cur = row;
+            for (const part of parts) {
+              if (cur == null) return undefined;
+              cur = cur[part];
+            }
+            if (cur !== undefined) return cur;
+            return row[parts[parts.length - 1]];
+          }
+          return undefined;
+        }
+        function applyRowDataToItem(itemEl, rowIndex, templateItemEl) {
+          if (!sampleData.length || !itemEl) return;
+          const row = sampleData[rowIndex % sampleData.length];
+          if (!row) return;
+          const itemCEls = itemEl.querySelectorAll('.c-el');
+          const templateCEls = templateItemEl ? templateItemEl.querySelectorAll('.c-el') : itemCEls;
+          itemCEls.forEach((itemChild, childIndex) => {
+            const bindingSourceEl =
+              itemChild.id && S.bindings[itemChild.id + '|Value']
+                ? itemChild
+                : itemChild.id && S.bindings[itemChild.id + '|Source']
+                  ? itemChild
+                  : templateCEls[childIndex];
+            if (!bindingSourceEl || !bindingSourceEl.id) return;
+            const bindingKeys = Object.keys(S.bindings).filter(
+              (key) => key.startsWith(bindingSourceEl.id + '|') && !key.endsWith('|Items'),
+            );
+            bindingKeys.forEach((bindingKey) => {
+              const binding = S.bindings[bindingKey];
+              const propKey = bindingKey.split('|')[1];
+              const value = rowValue(row, binding?.fieldName);
+              if (value === undefined || value === null || value === '') return;
+              const displayValue = String(value).replace(/^"|"$/g, '');
+              if (itemChild.classList.contains('c-el-img') || propKey === 'Source') {
+                const img = itemChild.querySelector('img');
+                if (img && displayValue !== '[img url]') {
+                  img.src = displayValue.startsWith('http')
+                    ? displayValue
+                    : ARTICLE_IMAGES[rowIndex % ARTICLE_IMAGES.length];
+                }
+              } else {
+                const valDiv =
+                  itemChild.querySelector('.val') ||
+                  Array.from(itemChild.children)
+                    .reverse()
+                    .find(
+                      (ch) =>
+                        ch.tagName === 'DIV' &&
+                        !ch.classList.contains('c-el-overlay') &&
+                        !ch.classList.contains('el-tags') &&
+                        !ch.classList.contains('bound-dot') &&
+                        !ch.classList.contains('src-tag'),
+                    ) ||
+                  itemChild.querySelector('span:not(.src-tag)');
+                if (valDiv) {
+                  valDiv.textContent = displayValue;
+                  if (valDiv.classList.contains('static')) valDiv.classList.remove('static');
+                }
+              }
+              if (itemChild.id) {
+                S.bindings[itemChild.id + '|' + propKey] = {
+                  ...binding,
+                  sample: '"' + displayValue + '"',
+                };
+              }
+            });
+          });
+        }
         // For nested repeaters bound to a sub-array, resolve count from parent item's data
         if (isNested && b) {
           const outerItem = repEl.parentElement?.closest('.rep-item');
@@ -40194,6 +40827,8 @@
         const pagKey = getRepPagKey(repeaterId);
         const pag = S.repPagination?.[pagKey];
         if (pag?.showLimit && pag.limit < targetCount) targetCount = pag.limit;
+        const templateItem = realItems[0];
+        realItems.forEach((item, idx) => applyRowDataToItem(item, idx, templateItem));
         if (targetCount < baseCount) {
           for (let i = targetCount; i < baseCount; i++) {
             realItems[i].style.display = 'none';
@@ -40202,32 +40837,6 @@
           return;
         }
         if (targetCount <= baseCount) return;
-        const def = EL_DEFS[repeaterId];
-        const sectionId = def?.section;
-        const hasInnerBindings =
-          sectionId &&
-          Object.keys(S.bindings).some((bk) => {
-            const [elId] = bk.split('|');
-            const d = EL_DEFS[elId];
-            return d && d.section === sectionId && d.repTemplate;
-          });
-        // Resolve sample data — for nested multiReference, use the referenced collection's sample data
-        let sampleData = [];
-        if (hasInnerBindings) {
-          const ctx2 = findSource(b.ctxId);
-          if (ctx2 && b.fieldName) {
-            const arrResult = findArrayFieldDeep(ctx2.fields, b.fieldName);
-            if (
-              arrResult &&
-              arrResult.field.type === 'multiReference' &&
-              arrResult.field.referencedCollection
-            ) {
-              sampleData = REP_SAMPLE_DATA[arrResult.field.referencedCollection] || [];
-            }
-          }
-          if (sampleData.length === 0) sampleData = REP_SAMPLE_DATA[b.ctxId] || [];
-        }
-        const templateItem = realItems[0];
         if (!templateItem) return;
         for (let i = baseCount; i < targetCount; i++) {
           const clone = templateItem.cloneNode(true);
@@ -40268,41 +40877,7 @@
               ri.style.cursor = 'pointer';
             });
           });
-          if (sampleData.length > 0) {
-            const row = sampleData[i % sampleData.length];
-            if (row) {
-              const tplCEls = templateItem.querySelectorAll('.c-el');
-              const clnCEls = clone.querySelectorAll('.c-el');
-              tplCEls.forEach((tplEl, idx) => {
-                if (!tplEl.id) return;
-                const bk = Object.keys(S.bindings).find((k) => k.startsWith(tplEl.id + '|'));
-                if (!bk) return;
-                const bind = S.bindings[bk];
-                if (!bind?.fieldName || !row[bind.fieldName]) return;
-                const clnEl = clnCEls[idx];
-                if (!clnEl) return;
-                if (tplEl.classList.contains('c-el-img')) {
-                  const img = clnEl.querySelector('img');
-                  if (img && row[bind.fieldName] !== '[img url]') img.src = row[bind.fieldName];
-                } else {
-                  const valDiv =
-                    clnEl.querySelector('.val') ||
-                    Array.from(clnEl.children)
-                      .reverse()
-                      .find(
-                        (ch) =>
-                          ch.tagName === 'DIV' &&
-                          !ch.classList.contains('c-el-overlay') &&
-                          !ch.classList.contains('el-tags') &&
-                          !ch.classList.contains('bound-dot') &&
-                          !ch.classList.contains('src-tag'),
-                      ) ||
-                    clnEl.querySelector('span:not(.src-tag)');
-                  if (valDiv) valDiv.textContent = row[bind.fieldName].replace(/^"|"$/g, '');
-                }
-              });
-            }
-          }
+          applyRowDataToItem(clone, i, templateItem);
           container.appendChild(clone);
         }
       }
@@ -45350,7 +45925,9 @@
 
         const available = getAvailableCtx(elId);
         const def = EL_DEFS[elId];
-        const prop = def?.props.find((p) => p.k === propKey);
+        const prop =
+          def?.props?.find((p) => p.k === propKey) ||
+          (def?.isRepItem && propKey === 'Visible' ? { k: 'Visible', t: 'boolean' } : null);
 
         // auto-select source if only one available
         if (!S.dd.srcId && available.length === 1) {
@@ -53043,6 +53620,7 @@
       document.addEventListener('click', (e) => {
         const dd = document.getElementById('dd');
         if (!dd.contains(e.target) && !e.target.closest('.bind-btn')) closeDd();
+        if (!e.target.closest('.ab-ai-action')) closeActionBarAiMenu();
         const pp = document.getElementById('pages-panel');
         if (pp && !pp.contains(e.target) && !e.target.closest('.page-sel'))
           pp.classList.remove('open');
@@ -53065,6 +53643,10 @@
         const def = EL_DEFS[elId];
         if (!def) return;
         if (propKey === 'Visible') {
+          if (def.isRepItem && S.sel === elId) {
+            renderBody();
+            return;
+          }
           const visCat = document.getElementById('rp-cat-visibility');
           if (visCat && S.sel === elId) {
             const visibleProp = def.props.find((p) => p.k === 'Visible');
@@ -54093,7 +54675,7 @@
       </div>
     </div>
     <button class="dd-confirm ${srcId && fieldName ? 'show' : ''}" onclick="ddRepConfirm(event)">
-      ✓ Bind Repeater${fieldName ? ` · ${fieldName.includes('.') ? fieldName.split('.').pop() : fieldName}` : ''}
+      Apply
     </button>
   `;
       }
@@ -54141,6 +54723,7 @@
         const sectionId = def?.section;
         const itemsOnly = S.dd?._itemsOnly === true;
         const openInspectorAfterBind = S.dd?._openInspectorAfterBind === true;
+        const autoFillAfterBind = S.dd?._autoFillAfterBind === true;
 
         if (sectionId) {
           const staleBindings = getRepStaleBindings(sectionId, ctxId);
@@ -54194,11 +54777,12 @@
         closeDd();
         if (itemsOnly) {
           document.getElementById(elId)?.classList.add('blank-connected');
+          if (autoFillAfterBind) autoFillRepItems(elId);
           if (openInspectorAfterBind) {
             S.sel = elId;
             S.tab = 'settings';
             S.inspectorOpen = true;
-            S.openCats.context = true;
+            S.openCats.context = false;
             S.openCats.properties = true;
             updateSelectionVisual(elId);
             renderRP();
@@ -54206,7 +54790,12 @@
           } else {
             renderRP();
           }
-          toast(`✓ Repeater → ${resolveCtxName(ctx.id)} · ${fieldName}`, true);
+          toast(
+            autoFillAfterBind
+              ? `✓ Connected & auto-filled from ${resolveCtxName(ctx.id)}`
+              : `✓ Repeater → ${resolveCtxName(ctx.id)} · ${fieldName}`,
+            true,
+          );
         } else if (!hasInnerBindings(elId)) {
           silentAutoBindElements(elId, ctxId, fieldName);
         } else {
@@ -56315,7 +56904,7 @@
           "
           id="confirm2-msg"
         ></div>
-        <div style="padding: 14px 16px 0; display: flex; flex-direction: column; gap: 8px">
+        <div style="padding: 14px 16px 16px; display: flex; flex-direction: column; gap: 8px">
           <button
             id="confirm2-primary-btn"
             onclick="doConfirm2Primary()"
@@ -56372,9 +56961,6 @@
           >
             Disconnect all
           </button>
-        </div>
-        <div class="modal-foot" style="justify-content: center">
-          <button class="modal-btn modal-cancel" onclick="cancelConfirm()">Cancel</button>
         </div>
       </div>
     </div>

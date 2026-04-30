@@ -1,5 +1,7 @@
 # Studio2 CMS Prototype
 
-Live prototype published with GitHub Pages.
+Prototype workspace for Studio2 CMS explorations.
 
-Open `pages/context-binding-prototype/binding-platform-demo.html`.
+## Context Binding
+
+Open `pages/context-binding-prototype/binding-platform-demo.html` to preview the context binding prototype.

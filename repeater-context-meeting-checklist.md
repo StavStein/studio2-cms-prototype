@@ -3,10 +3,9 @@
 ## 1. Context Attachment To Repeater
 
 - [ ] Show how a context is attached directly to a repeater.
-- [ ] Confirm where the context appears in the inspector.
+- [ ] Confirm context is collapsed for Repater use-case.
 - [ ] Clarify context on repeater vs. context inherited from parent.
-- [ ] Review context pill and canvas indication.
-- [ ] Discuss when a repeater should own its own context.
+- [ ] Review context hat and action bar actions.
 
 ## 2. Binding Repeater Items
 
@@ -16,22 +15,21 @@
 - [ ] Cover binding using inspector suggestions.
 - [ ] Confirm source selection behavior.
 - [ ] Confirm field or array selection behavior.
-- [ ] Confirm final `Apply` behavior.
 - [ ] Confirm inspector state after binding.
 
 ## 3. Item-Level Settings Panel
 
 - [ ] Open item-level settings from a repeater item.
 - [ ] Review which settings apply per item.
-- [ ] Clarify what is inherited from the repeater vs. editable per item.
-- [ ] Confirm how item-level bindings are represented.
-- [ ] Review any missing or confusing controls.
+- [ ] Clarify what is inherited from the repeater (only item array's fileds)
+- [ ] Confirm the behavior of the inspector settings in the item selection.
+
 
 ## 4. Disconnect Repeater
 
 - [ ] Disconnect the `Items` binding.
 - [ ] Confirm warning and confirmation copy.
-- [ ] Confirm what happens to inner element bindings.
+- [ ] Confirm what happens to inner element bindings. 
 - [ ] Confirm visual fallback state on canvas.
 - [ ] Disconnect context from repeater.
 - [ ] Compare disconnecting `Items` vs. removing the context.
@@ -61,16 +59,4 @@
 
 - [ ] Should context attachment and `Items` binding happen in one flow or remain separate concepts?
 - [ ] When should the system auto-bind vs. ask for confirmation?
-- [ ] What should happen when switching context with existing bindings?
-- [ ] Should the inspector open after binding, and which section should be expanded?
-- [ ] What is the clearest terminology: context, source, collection, data, or `Items`?
 
-## Meeting Outcomes
-
-- [ ] Align on the primary repeater connection flow.
-- [ ] Align on disconnect behavior.
-- [ ] Align on switch context behavior.
-- [ ] Align on auto-fill and dreamy experience scope.
-- [ ] Capture design gaps.
-- [ ] Capture product and spec decisions.
-- [ ] Capture follow-up prototype changes.

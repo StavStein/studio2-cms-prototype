@@ -3090,11 +3090,11 @@
       }
       .c-repeater.bound:not(.sel) .rep-pill {
         background: var(--sur);
-        border: 1px solid var(--grn);
-        color: var(--grn);
+        border: 1px solid #e84393;
+        color: #e84393;
       }
       .c-repeater.bound:not(.sel) .rep-pill .el-bind-sep {
-        background: var(--grn);
+        background: #e84393;
         opacity: 0.3;
       }
       .c-repeater.bound:not(.sel) .rep-pill .el-bind-sec {
@@ -3102,13 +3102,13 @@
       }
       .c-repeater.bound:not(.sel) .rep-pill .el-bind-sec:hover {
         opacity: 1;
-        background: rgba(16, 185, 129, 0.1);
+        background: rgba(232, 67, 147, 0.1);
       }
       .c-repeater.bound:not(.sel) .rep-pill .el-bind-ctx:hover {
-        background: rgba(16, 185, 129, 0.1);
+        background: rgba(232, 67, 147, 0.1);
       }
       .c-repeater.bound.sel .rep-pill {
-        background: var(--grn);
+        background: #e84393;
         color: #fff;
       }
       .c-repeater.bound.sel .rep-pill .el-bind-sep {
@@ -3486,10 +3486,10 @@
         box-shadow: 0 0 0 3px var(--acc-d);
       }
       .c-repeater.bound {
-        border-color: var(--grn);
+        border-color: #e84393;
       }
       .c-repeater.sel.bound {
-        box-shadow: 0 0 0 3px var(--grn-d);
+        box-shadow: 0 0 0 3px #e8439320;
       }
       .c-repeater .c-repeater {
         border-color: transparent;
@@ -3506,11 +3506,11 @@
         border-color: color-mix(in srgb, var(--acc) 40%, transparent);
       }
       .c-repeater .c-repeater.sel.bound {
-        border-color: var(--grn);
-        box-shadow: 0 0 0 3px var(--grn-d);
+        border-color: #e84393;
+        box-shadow: 0 0 0 3px #e8439320;
       }
       .c-repeater .c-repeater.child-sel.bound {
-        border-color: color-mix(in srgb, var(--grn) 40%, transparent);
+        border-color: color-mix(in srgb, #e84393 40%, transparent);
       }
       .rep-header {
         padding: 7px 10px;
@@ -35900,7 +35900,8 @@
           let html = '';
           html += renderActionBarAiControl();
           html += '<div class="action-bar-sep"></div>';
-          html += `<div class="action-bar-text" onclick="${isConnected ? 'actionManageItems()' : 'actionConnectRepeaterData(event)'}">${isConnected ? 'Connect fields' : 'Connect to data'}</div>`;
+          html += `<div class="action-bar-text" onclick="${isConnected ? 'actionManageItems()' : 'actionConnectRepeaterData(event)'}">${isConnected ? 'Manage' : 'Connect to data'}</div>`;
+          if (isConnected) html += `<div class="action-bar-text" id="ab-sort-filter-btn" onclick="actionSortFilter()">Sort &amp; Filter</div>`;
           html += `<div class="action-bar-text" onclick="actionDesign()">Change Layout</div>`;
           html += '<div class="action-bar-sep"></div>';
           html += `<div class="action-bar-icon" title="Fill">${ACTION_BAR_ICONS.fill}</div>`;
@@ -36251,6 +36252,7 @@
         const level = getNestedDepth() || S.itemsTabActiveLevel || 1;
         S.inspectorOpen = true;
         S.tab = 'settings';
+        S.openCats.context = true;
         S.ctxSettingsView = ctxId;
         S.ctxSettingsTab = 'configuration';
         S.cfgAccordion[ctxId] = { [level]: true };
@@ -37515,7 +37517,7 @@
     </div>
     <div class="rp-cat-body">
       <div class="prop-wrap">
-        <div class="prop-key" style="display:flex;align-items:center;gap:4px">Items <span style="font-size:10px;color:var(--t3);cursor:help" title="The repeater's only data property. Connect it to any available array to populate items with dynamic content. Inner elements can then bind to fields within each item.">ⓘ</span></div>
+        <div class="prop-key" style="display:flex;align-items:center;gap:4px">List <span style="font-size:10px;color:var(--t3);cursor:help;position:relative" onmouseenter="this.querySelector('.list-tip').style.display='block'" onmouseleave="this.querySelector('.list-tip').style.display='none'">ⓘ<div class="list-tip" style="display:none;position:absolute;left:0;top:16px;width:200px;padding:8px 10px;background:var(--t1);color:var(--sur);font-size:10px;line-height:1.4;border-radius:6px;z-index:100;font-weight:400;pointer-events:none;box-shadow:0 4px 12px #0003">Connect to a data source — each row in the repeater will show one item from the connected list.</div></span></div>
         <div class="prop-row ${b ? 'bound' : ''} ${isActiveDd ? 'active-bind' : ''}">
           <div class="prop-main">
             <div class="prop-val">
@@ -37523,7 +37525,7 @@
                 b && ctx
                   ? `<div class="prop-bound-chip prop-bound-detail" style="display:flex">
                     <span class="prop-bound-ctx" onclick="navToSectionCtx('${repId}',event)">${ctx.icon} ${resolveCtxName(ctx.id)} (source)</span>
-                    <span class="prop-bound-field">${displayFieldName(repId, b)}<span class="chip-x" onclick="unbind('${repId}','Items',event)">✕</span></span>
+                    <span class="prop-bound-field">List<span class="chip-x" onclick="unbind('${repId}','Items',event)">✕</span></span>
                   </div>`
                   : `<span style="font-size:11px;color:var(--t3);font-style:italic">Connect to an array field →</span>`
               }
@@ -38796,7 +38798,7 @@
       </div>
       <div class="rp-cat-body">
         <div class="prop-wrap">
-          <div class="prop-key" style="display:flex;align-items:center;gap:4px">Items <span style="font-size:10px;color:var(--t3);cursor:help" title="The repeater's only data property. Connect it to any available array to populate items with dynamic content. Inner elements can then bind to fields within each item.">ⓘ</span></div>
+          <div class="prop-key" style="display:flex;align-items:center;gap:4px">List <span style="font-size:10px;color:var(--t3);cursor:help;position:relative" onmouseenter="this.querySelector('.list-tip').style.display='block'" onmouseleave="this.querySelector('.list-tip').style.display='none'">ⓘ<div class="list-tip" style="display:none;position:absolute;left:0;top:16px;width:200px;padding:8px 10px;background:var(--t1);color:var(--sur);font-size:10px;line-height:1.4;border-radius:6px;z-index:100;font-weight:400;pointer-events:none;box-shadow:0 4px 12px #0003">Connect to a data source — each row in the repeater will show one item from the connected list.</div></span></div>
           <div class="prop-row ${b ? 'bound' : ''} ${isActiveDd ? 'active-bind' : ''}">
             <div class="prop-main">
               <div class="prop-val">
@@ -38804,7 +38806,7 @@
                   b && ctx
                     ? `<div class="prop-bound-chip prop-bound-detail" style="display:flex">
                       <span class="prop-bound-ctx" onclick="navToSectionCtx('${S.sel}',event)">${ctx.icon} ${resolveCtxName(ctx.id)} (source)</span>
-                      <span class="prop-bound-field">${displayFieldName(S.sel, b)}<span class="chip-x" onclick="unbind('${S.sel}','Items',event)">✕</span></span>
+                      <span class="prop-bound-field">List<span class="chip-x" onclick="unbind('${S.sel}','Items',event)">✕</span></span>
                     </div>`
                     : `<span style="font-size:11px;color:var(--t3);font-style:italic">Connect to an array field →</span>`
                 }
@@ -40230,7 +40232,13 @@
           if (binding) {
             const ctxLabel = `${resolveCtxName(binding.ctxId)} · ${displayFieldName(id, binding)}`;
             const bindIcon = `<svg class="el-bind-icon" width="8" height="8" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6l-1.2 1.2a2.5 2.5 0 0 1-3.6-3.4L6.4 2.6a2.5 2.5 0 0 1 3.5 0l.1.1"/><path d="M6 10l1.2-1.2a2.5 2.5 0 0 1 3.6 3.4l-1.2 1.2a2.5 2.5 0 0 1-3.5 0l-.1-.1"/></svg>`;
-            pill.innerHTML = `<span class="el-bind-sec" onclick="elPillNavCtx(event,'${id}')">${def.type}</span><span class="el-bind-sep"></span><span class="el-bind-ctx" onclick="elPillNavCtx(event,'${id}')">${bindIcon} ${ctxLabel}</span>`;
+            const ctxId = binding.ctxId;
+            const hasSort = (S.sortRules[ctxId] || []).length > 0 || !!(S._itemsParams?.[id]?.sort && S._itemsParams[id].sort !== 'created_desc');
+            const hasFilter = (S.filterRules[ctxId] || []).length > 0 || !!(S._itemsParams?.[id]?.filter);
+            const sortIndicator = hasSort ? `<svg width="8" height="8" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h7M3 8h5M3 12h3"/><path d="M13 4v8M11 10l2 2 2-2"/></svg>` : '';
+            const filterIndicator = hasFilter ? `<svg width="8" height="8" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h12l-4.5 5.5V13l-3-1.5V9.5z"/></svg>` : '';
+            const sfBadge = (hasSort || hasFilter) ? `<span class="el-bind-sep"></span><span style="display:flex;align-items:center;gap:2px;opacity:0.75" title="${[hasSort ? 'Sorted' : '', hasFilter ? 'Filtered' : ''].filter(Boolean).join(' · ')}">${sortIndicator}${filterIndicator}</span>` : '';
+            pill.innerHTML = `<span class="el-bind-sec" onclick="elPillNavCtx(event,'${id}')">${def.type}</span><span class="el-bind-sep"></span><span class="el-bind-ctx" onclick="elPillNavCtx(event,'${id}')">${bindIcon} ${ctxLabel}</span>${sfBadge}`;
           } else {
             pill.innerHTML = '';
           }

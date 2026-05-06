@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Static Server",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "/Users/stavs/Desktop/Protos/studio2-cms-prototype"],
+      "port": 3001,
+      "autoPort": true
+    }
+  ]
+}

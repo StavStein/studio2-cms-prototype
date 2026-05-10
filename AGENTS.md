@@ -31,7 +31,9 @@ artifacts:
 - `artifacts/discovery/competitor-research-repeater-in-repeater.md` | discovery | `ck-research-competitors` | competitor research | inputs: project brief
 - `artifacts/discovery/data-analysis-plan-repeater-event-handlers.md` | discovery | `ck-data-analysis-plan` | data analysis plan | inputs: project brief
 - `artifacts/discovery/data-analysis-plan-repeater-in-repeater.md` | discovery | `ck-data-analysis-plan` | data analysis plan | inputs: project brief
+- `artifacts/discovery/data-analysis-plan-rir-vertical-data.md` | discovery | `ck-data-analysis-plan` | data analysis plan | inputs: project brief
 - `artifacts/discovery/data-analysis-repeater-in-repeater.md` | discovery | `ck-data-query` | data analysis | inputs: data analysis plan
+- `artifacts/discovery/data-analysis-rir-vertical-data.md` | discovery | `ck-data-query` | data analysis | inputs: data-analysis-plan-rir-vertical-data.md
 - `artifacts/discovery/internal-discovery-repeater-event-handlers.md` | discovery | `ck-research-wix-internal` | internal discovery | inputs: project brief
 - `artifacts/discovery/internal-discovery-repeater-in-repeater.md` | discovery | `ck-research-wix-internal` | internal discovery | inputs: project brief
 - `artifacts/discovery/research-summary-repeater-event-handlers.md` | discovery | `ck-research-summary` | discovery synthesis | inputs: discovery artifacts

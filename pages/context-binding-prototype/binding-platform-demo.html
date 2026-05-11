@@ -37735,7 +37735,7 @@
     </div>
     <div class="rp-cat-body">
       <div class="prop-wrap">
-        <div class="prop-key" style="display:flex;align-items:center;gap:4px">List <span style="font-size:10px;color:var(--t3);cursor:help;position:relative" onmouseenter="this.querySelector('.list-tip').style.display='block'" onmouseleave="this.querySelector('.list-tip').style.display='none'">ⓘ<div class="list-tip" style="display:none;position:absolute;left:0;top:16px;width:200px;padding:8px 10px;background:var(--t1);color:var(--sur);font-size:10px;line-height:1.4;border-radius:6px;z-index:100;font-weight:400;pointer-events:none;box-shadow:0 4px 12px #0003">Connect to a data source — each row in the repeater will show one item from the connected list.</div></span></div>
+        <div class="prop-key" style="display:flex;align-items:center;gap:4px">Repeater <span style="font-size:10px;color:var(--t3);cursor:help;position:relative" onmouseenter="this.querySelector('.list-tip').style.display='block'" onmouseleave="this.querySelector('.list-tip').style.display='none'">ⓘ<div class="list-tip" style="display:none;position:absolute;left:0;top:16px;width:200px;padding:8px 10px;background:var(--t1);color:var(--sur);font-size:10px;line-height:1.4;border-radius:6px;z-index:100;font-weight:400;pointer-events:none;box-shadow:0 4px 12px #0003">Connect to a data source — each row in the repeater will show one item from the connected list.</div></span></div>
         <div class="prop-row ${b ? 'bound' : ''} ${isActiveDd ? 'active-bind' : ''}">
           <div class="prop-main">
             <div class="prop-val">
@@ -39016,7 +39016,7 @@
       </div>
       <div class="rp-cat-body">
         <div class="prop-wrap">
-          <div class="prop-key" style="display:flex;align-items:center;gap:4px">List <span style="font-size:10px;color:var(--t3);cursor:help;position:relative" onmouseenter="this.querySelector('.list-tip').style.display='block'" onmouseleave="this.querySelector('.list-tip').style.display='none'">ⓘ<div class="list-tip" style="display:none;position:absolute;left:0;top:16px;width:200px;padding:8px 10px;background:var(--t1);color:var(--sur);font-size:10px;line-height:1.4;border-radius:6px;z-index:100;font-weight:400;pointer-events:none;box-shadow:0 4px 12px #0003">Connect to a data source — each row in the repeater will show one item from the connected list.</div></span></div>
+          <div class="prop-key" style="display:flex;align-items:center;gap:4px">Repeater <span style="font-size:10px;color:var(--t3);cursor:help;position:relative" onmouseenter="this.querySelector('.list-tip').style.display='block'" onmouseleave="this.querySelector('.list-tip').style.display='none'">ⓘ<div class="list-tip" style="display:none;position:absolute;left:0;top:16px;width:200px;padding:8px 10px;background:var(--t1);color:var(--sur);font-size:10px;line-height:1.4;border-radius:6px;z-index:100;font-weight:400;pointer-events:none;box-shadow:0 4px 12px #0003">Connect to a data source — each row in the repeater will show one item from the connected list.</div></span></div>
           <div class="prop-row ${b ? 'bound' : ''} ${isActiveDd ? 'active-bind' : ''}">
             <div class="prop-main">
               <div class="prop-val">
@@ -40452,10 +40452,9 @@
             const bindIcon = `<svg class="el-bind-icon" width="8" height="8" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6l-1.2 1.2a2.5 2.5 0 0 1-3.6-3.4L6.4 2.6a2.5 2.5 0 0 1 3.5 0l.1.1"/><path d="M6 10l1.2-1.2a2.5 2.5 0 0 1 3.6 3.4l-1.2 1.2a2.5 2.5 0 0 1-3.5 0l-.1-.1"/></svg>`;
             const ctxId = binding.ctxId;
             const hasSort = (S.sortRules[ctxId] || []).length > 0 || !!(S._itemsParams?.[id]?.sort && S._itemsParams[id].sort !== 'created_desc');
-            const hasFilter = (S.filterRules[ctxId] || []).length > 0 || !!(S._itemsParams?.[id]?.filter);
-            const sortIndicator = hasSort ? `<svg width="8" height="8" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h7M3 8h5M3 12h3"/><path d="M13 4v8M11 10l2 2 2-2"/></svg>` : '';
+            const hasFilter = S._itemsParams?.[id] ? !!(S._itemsParams[id].filter) : (S.filterRules[ctxId] || []).length > 0;
             const filterIndicator = hasFilter ? `<svg width="8" height="8" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 4h12l-4.5 5.5V13l-3-1.5V9.5z"/></svg>` : '';
-            const sfBadge = (hasSort || hasFilter) ? `<span class="el-bind-sep"></span><span style="display:flex;align-items:center;gap:2px;opacity:0.75" title="${[hasSort ? 'Sorted' : '', hasFilter ? 'Filtered' : ''].filter(Boolean).join(' · ')}">${sortIndicator}${filterIndicator}</span>` : '';
+            const sfBadge = hasFilter ? `<span class="el-bind-sep"></span><span style="display:flex;align-items:center;gap:2px;opacity:0.75" title="Filtered">${filterIndicator}</span>` : '';
             pill.innerHTML = `<span class="el-bind-sec" onclick="elPillNavCtx(event,'${id}')">${def.type}</span><span class="el-bind-sep"></span><span class="el-bind-ctx" onclick="elPillNavCtx(event,'${id}')">${bindIcon} ${ctxLabel}</span>${sfBadge}`;
           } else {
             pill.innerHTML = '';

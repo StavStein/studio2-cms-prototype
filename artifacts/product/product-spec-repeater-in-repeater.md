@@ -1,6 +1,6 @@
 # Requirements Specification — Repeater in Repeater (Studio 2 CMS)
 
-> **Status:** Draft v2 — delta tags added to §3 Summarization Table from codebase scan of `wix-private/odeditor-packages` (HEAD `8b0a2f9`, 2026-04-26). Built from the discovery suite under `artifacts/discovery/`, the existing [`blank-repeater-prd.md`](../../blank-repeater-prd.md), and the [`product-spec-repeater-pagination.md`](product-spec-repeater-pagination.md).
+> **Status:** Draft v5 — depth updated 2 → 3 levels; AI-assisted nested binding moved in-scope; item limit (no pagination) for Nested Repeaters specified (2026-05-10). Delta tags added to §3 from codebase scan of `wix-private/odeditor-packages` (HEAD `8b0a2f9`, 2026-04-26). Built from the discovery suite under `artifacts/discovery/`, the existing [`blank-repeater-prd.md`](../../blank-repeater-prd.md), and the [`product-spec-repeater-pagination.md`](product-spec-repeater-pagination.md).
 
 ## Table of Contents
 
@@ -12,6 +12,8 @@
   - [4.2 Inherit Parent Context Automatically (INT-002)](#42-inherit-parent-context-automatically-int-002)
   - [4.3 Safely Replace and Disconnect Nested Bindings (INT-003)](#43-safely-replace-and-disconnect-nested-bindings-int-003)
   - [4.4 Stay Oriented at the Limits (INT-004)](#44-stay-oriented-at-the-limits-int-004)
+  - [4.5 AI-Assisted Nested Binding (INT-005)](#45-ai-assisted-nested-binding-int-005)
+  - [4.6 Paginate Nested Repeater Items (INT-006)](#46-paginate-nested-repeater-items-int-006)
 - [5. Non-Functional Requirements](#5-non-functional-requirements)
   - [5.1 Reliability](#51-reliability)
   - [5.2 Performance](#52-performance)
@@ -32,13 +34,13 @@
 
 ## 1. Overview
 
-**Feature summary.** A Nested Repeater is a Repeater placed inside another Repeater's item template, whose `Items` is bound to an array or multi-reference field on the Outer Repeater's parent item. Studio 2 introduces a first-class canvas flow for it — a `This item` scope in the binding picker, drag-into-item auto-binding, depth and items-per-parent caps, and replace/disconnect cascades that match the existing blank-Repeater PRD patterns.
+**Feature summary.** A Nested Repeater is a Repeater placed inside another Repeater's item template, whose `Items` is bound to an array or multi-reference field on the Outer Repeater's parent item. Studio 2 introduces a first-class canvas flow for it — a `This item` scope in the binding picker, drag-into-item auto-binding, a depth limit (3 levels), a per-level item limit on nested levels, and replace/disconnect cascades that match the existing blank-Repeater PRD patterns.
 
 **Problem to solve.** Builders who organize content as parent → children (Wix Stores categories with products, Wix Restaurants menus with dishes, courses with lessons, properties with contacts) cannot render that shape natively in Studio 2 today; they fall back on multi-dataset hacks, side-by-side filtered Repeaters, or Velo / Wix Blocks code, all of which break in predictable ways the Customer Care team is already labeling internally. The runtime supports the shape via Wix Blocks `include()` / `wixData.queryReferenced()`, but the canvas binding model has not exposed it.
 
 **Strategic positioning.** Nested repeating is **table-stakes** in this category — Webflow ships up to 3 levels with drag-and-drop, Bubble ships unbounded depth with performance footguns, Squarespace lacks it entirely. Wix Studio 2 closes a parity gap that currently shows up as switching-intent threads. The Wix Help Center already has a literal request page (*"CMS Request: Attaching a Repeater onto Another Repeater"*) — the gap is acknowledged.
 
-**v1 scope.** Canvas-only nested binding for Studio 2, depth = 2 (Outer Repeater → Nested Repeater), items-per-parent cap = 100 (Webflow parity), reusing the existing binding-platform's scope-badge mechanism. AI-assisted flows, depth ≥ 3, mobile-specific affordances, and Tables/Galleries are out of scope.
+**v1 scope.** Canvas-only nested binding for Studio 2, depth = 3 (Outer Repeater → Nested Repeater → Deeply Nested Repeater), reusing the existing binding-platform's scope-badge mechanism. AI-assisted nested binding via the Studio 2 AI agent is in scope (INT-005). Nested Repeaters have a builder-configurable item limit (1–100, default 10) with no pagination — child items load all at once per parent row, up to the configured limit. The Outer Repeater retains full pagination behavior from the base pagination spec. Depth ≥ 4, mobile-specific affordances, and Tables/Galleries are out of scope.
 
 ---
 
@@ -49,11 +51,12 @@
 | **INT-001** | Main | As a Studio User / Self-Creator, I want to render parent → child data on a page (e.g. categories with products, meals with dishes) so I can build content-rich sites without leaving the canvas. | Critical |
 | SUB-001a | Sub | I want to bind a Nested Repeater's `Items` to a Child array / Child collection of the Parent item. | Critical |
 | SUB-001b | Sub | I want available parent-item array / multi-reference fields surfaced first in the binding picker, marked with a `This item` scope. | Critical |
-| SUB-001c | Sub | I want auto-binding to the first available Child array when context is inherited, the same way blank Repeaters auto-bind today. | Must have |
+| SUB-001c | Sub | I want auto-binding to the first available Child array when context is inherited, the same requirement as of blank Repeaters auto-bind. | Must have |
 | **INT-002** | Main | As a Studio User, I want the Nested Repeater to inherit the Parent row context automatically so I do not have to wire datasets, references, or filters manually. | Critical |
 | SUB-002a | Sub | I want context to be inherited when a Repeater is dropped inside another Repeater's item, without an explicit attach action. | Critical |
 | SUB-002b | Sub | I want to clearly distinguish "inherited from parent item" vs. "directly attached" contexts in the inspector. | Must have |
 | SUB-002c | Sub | I want a clear initial state when the Outer Repeater is unbound — the Nested Repeater should explain that the Outer must be connected first. | Must have |
+| SUB-002d | Sub | I want a warning and a combined "bind child + connect Repeater" CTA when I try to bind a child element inside an unconnected Nested Repeater, so I can complete the binding in one action without manually connecting the Repeater first. | Must have |
 | **INT-003** | Main | As a Studio User, I want to safely change or remove nested bindings so I can iterate on layout without losing existing work or breaking grandchild bindings unexpectedly. | Critical |
 | SUB-003a | Sub | I want a warning before disconnecting the Outer Repeater's `Items` if it would cascade-disconnect inner bindings, including the Nested Repeater and its child-item bindings. | Critical |
 | SUB-003b | Sub | I want a warning before replacing the Outer Repeater's source if inner bindings would be affected, with an accurate count of grandchild bindings. | Critical |
@@ -61,10 +64,18 @@
 | SUB-003d | Sub | I want a recovery path (undo / revert) immediately after a destructive change. | Must have |
 | **INT-004** | Main | As a Studio User / Self-Creator, I want clear feedback when I hit nesting or data limits so I never silently fail or end up with a broken page. | Critical |
 | SUB-004a | Sub | I want to see the depth limit when reached and understand why I cannot nest further. | Must have |
-| SUB-004b | Sub | I want to see the items-per-parent cap when exceeded, with guidance on how to trim. | Must have |
+| SUB-004b | Sub | I want to see when my configured item limit is cutting off child items, with guidance on how to raise it. | Must have |
 | SUB-004c | Sub | I want clear copy when the Parent item has no usable Child arrays / Child collections. | Must have |
 | SUB-004d | Sub | I want clear handling for empty data — when a Parent row's Child array is present but empty. | Must have |
 | SUB-004e | Sub | I want clear visibility when the Nested Repeater's attached context differs from its `Items` source (mismatch). | Must have |
+| **INT-005** | Main | As a Studio User / Self-Creator, I want the Studio 2 AI agent to set up a nested Repeater structure for me — from a natural language instruction or a schema-aware suggestion — so I can build parent → child layouts without knowing the binding model. | Critical |
+| SUB-005a | Sub | I want to describe what I want ("show products under each category") and have the AI agent create the Outer and Nested Repeater structure, bind both, and populate the canvas. | Critical |
+| SUB-005b | Sub | I want the AI agent to suggest a Child array binding when I open the `This item` picker, ranked by relevance to the current parent collection schema. | Must have |
+| SUB-005c | Sub | I want to accept, modify, or reject the AI agent's suggestion before it is applied — the AI never silently commits a binding. | Critical |
+| **INT-006** | Main | As a Studio User, I want to control how many child items a Nested Repeater shows per parent row, so I can balance content richness against page load performance. | Must have |
+| SUB-006a | Sub | I want a configurable item limit on each Nested Repeater level (1–100), independent of any other level's settings. | Must have |
+| SUB-006b | Sub | I want the default item limit to be conservative (10) so the page performs well out of the box — I can raise it when I need more. | Must have |
+| SUB-006c | Sub | I want a clear performance warning that shows me the real cost of my settings across all levels (outer items × nested limit), so I can make an informed decision before publishing. | Must have |
 
 ---
 
@@ -82,11 +93,16 @@ Delta tags based on codebase scan of `wix-private/odeditor-packages` (HEAD `8b0a
 | FR-006 | INT-003 / SUB-003a, b | UC-1: Warn on Outer disconnect with grandchild count; UC-2: Warn on Outer replace with grandchild count; UC-3: Cancel preserves all bindings | `unbindProperty` exists; cascade-warning dialog with grandchild-count computation does not | **[NEW]** cascade-warning dialog; **[NEW]** 2-level binding-impact counter | Critical | Phase 1 |
 | FR-007 | INT-003 / SUB-003c | UC-1: Disconnect Nested Repeater independently; UC-2: Replace Nested Repeater's `Items` source; UC-3: Preserve layout and styling | `unbindProperty` on `ComponentDataContextAPI` is reusable; per-Repeater scoped warning copy is new | **[EXISTS]** `unbindProperty`; **[NEW]** scoped warning copy + replace flow for Nested Repeater | Critical | Phase 1 |
 | FR-008 | INT-003 / SUB-003d | UC-1: Undo immediately after disconnect or replace; UC-2: Persistent undo stack across the operation | No undo-stack coverage for binding-graph operations today | **[NEW]** editor undo coverage for nested binding changes | Must have | Phase 1 |
-| FR-009 | INT-004 / SUB-004a | UC-1: Block dropping a third-level Nested Repeater; UC-2: Surface depth-limit message in inspector when at depth | No depth check exists for Repeater nesting | **[NEW]** depth check on drop/paste; **[NEW]** depth-aware inspector copy | Must have | Phase 1 |
-| FR-010 | INT-004 / SUB-004b | UC-1: Surface items-per-parent cap when exceeded; UC-2: Communicate that data beyond the cap is not rendered | No per-parent item cap or messaging exists | **[NEW]** runtime cap enforcement; **[NEW]** inspector cap messaging | Must have | Phase 1 |
+| FR-009 | INT-004 / SUB-004a | UC-1: Block dropping a fourth-level Nested Repeater; UC-2: Surface depth-limit message in inspector when at depth | No depth check exists for Repeater nesting | **[NEW]** depth check on drop/paste; **[NEW]** depth-aware inspector copy | Must have | Phase 1 |
+| FR-010 | INT-004 / SUB-004b | UC-1: Show configured item limit in inspector; UC-2: Link to context config to adjust; UC-3: Communicate that items beyond the limit are not rendered | No per-level item limit UI exists for the nested case | **[NEW]** item-limit display in Nested Repeater inspector; **[NEW]** link to nested context config | Must have | Phase 1 |
 | FR-011 | INT-004 / SUB-004c | UC-1: Communicate "no Child arrays available" when the Parent item has no list-shaped fields; UC-2: Offer recovery path | `CMS/propertyBindingPanel` has no nested empty-state for `This item` scope | **[NEW]** binding-picker empty-state for nested case (in external CMS packages) | Must have | Phase 1 |
 | FR-012 | INT-004 / SUB-004d | UC-1: Render empty-Child-array state cleanly per Parent row; UC-2: Preserve layout when empty | No canvas/runtime behavior for empty inner arrays | **[NEW]** runtime empty-inner-array render; **[NEW]** layout-preservation guarantee | Must have | Phase 1 |
 | FR-013 | INT-004 / SUB-004e | UC-1: Show context mismatch on Nested Repeater inspector; UC-2: Communicate which source feeds the Nested Repeater when it differs from the attached context | `CmsControlsWrapper` tag pattern is reusable; mismatch-state display is new | **[EXISTS]** `CmsControlsWrapper` / `CmsBindingTag` pattern; **[NEW]** mismatch-state indicator on Nested Repeater inspector | Must have | Phase 1 |
+| FR-014 | INT-005 / SUB-005a | UC-1: Builder describes nested layout in natural language; AI agent creates and binds Outer + Nested Repeater; UC-2: Builder reviews and accepts before canvas commit | Studio 2 AI agent action-bar integration; reuses FR-001/FR-003 binding primitives | **[NEW]** AI agent handler for nested Repeater creation; **[NEW]** confirmation step before binding commit | Critical | Phase 1 |
+| FR-015 | INT-005 / SUB-005b, c | UC-1: AI suggests a Child array when `This item` picker opens; UC-2: Builder accepts, edits, or rejects; UC-3: AI never auto-commits | Binding-picker extension; AI ranking signal from parent collection schema | **[NEW]** AI suggestion row in `This item` picker; **[NEW]** accept / edit / reject interaction | Must have | Phase 1 |
+| FR-016 | INT-006 / SUB-006a, b | UC-1: Configure item limit (1–100) on a Nested Repeater; UC-2: Default to 10 on first bind; UC-3: Limit is per-level, independent across nesting depths | `renderSettingsRepeaterOnRepeater()` must render an item-limit section (no pagination toggle); intentionally asymmetric from `renderSettings()` which has the full toggle; `S.cfgValues[ctxId].pageSize` already stores the value per-context | **[MODIFY]** `renderSettingsRepeaterOnRepeater()` to render item-limit-only section (no toggle, no load-more); **[NEW]** default 10 on first bind for nested context; **[NEW]** hide section when `Items` unbound | Must have | Phase 1 |
+| FR-017 | INT-006 / SUB-006c | UC-1: Show multiplicative estimate (outer items × nested limit) in Nested Repeater inspector; UC-2: Fire warning when total exceeds threshold; UC-3: Warning references outer Repeater's actual configured count | Ancestor-context traversal to read the outer Repeater's configured item count or items-per-load | **[NEW]** multiplicative estimate display in nested Repeater context config; **[NEW]** ancestor-count lookup to compute outer × nested total; **[MODIFY]** warning threshold uses combined total (not per-level threshold) | Must have | Phase 1 |
+| FR-018 | INT-002 / SUB-002d | UC-1: Show warning on child element binding panel when immediate parent Nested Repeater is unconnected; UC-2: Combined "Bind [field] + Repeater → items" CTA connects both in one action; UC-3: Warning omitted when parent Repeater is already connected | `CMS/propertyBindingPanel` renders the binding CTA without Repeater-connection awareness today | **[MODIFY]** binding picker / apply-CTA to detect unconnected parent Repeater and offer combined bind; **[NEW]** warning banner in child-element binding panel for unconnected parent Nested Repeater case | Must have | Phase 1 |
 | NFR-001…013 | — | — | — | — | See §5 | — |
 
 ---
@@ -100,8 +116,8 @@ Delta tags based on codebase scan of `wix-private/odeditor-packages` (HEAD `8b0a
 | Field | Value |
 |---|---|
 | **ReqID** | FR-001 |
-| **Description** | Studio 2 lets a builder bind a Nested Repeater's `Items` directly to an array or multi-reference field of the Outer Repeater's Parent item, without configuring secondary datasets, filters, or code. The binding picker exposes a new `This item` scope that surfaces the Parent item's Child arrays / Child collections at the top, ranked above existing `This repeater` and page-level scopes. |
-| **Change vs. existing** | Extends the existing binding picker (today: page-level contexts, `This repeater` scope) with a `This item` scope that becomes available only when the Repeater being bound is itself nested inside another Repeater's item. Multi-reference fields on the Parent item appear as selectable Child collections — this is the first place in the canvas-binding model where multi-reference fields become first-class binding sources. The runtime call is the existing `wixData.queryReferenced()` / Wix Blocks `include()` primitive. |
+| **Description** | Studio 2 lets a builder bind a Nested Repeater's `Items` to parent-scoped child data via two mechanisms. **Mechanism 1 (forward reference):** bind directly to an array or multi-reference field on the Parent item via the new `This item` scope — no dataset configuration required. **Mechanism 2 (reverse reference):** bind to a separate related collection whose records each carry a reference field pointing back to the parent collection — the system automatically creates a per-row filtered context, no manual filter setup required. Both mechanisms surface inside the same `Connect data` flow and produce independent per-parent-row rendering. |
+| **Change vs. existing** | Extends the existing binding picker (today: page-level contexts, `This repeater` scope) with two new nested binding paths. **Mechanism 1** adds a `This item` scope that surfaces the Parent item's Child arrays / multi-reference fields at the top of the picker — this is the first place in the canvas-binding model where multi-reference fields are first-class binding sources; runtime: `wixData.queryReferenced()` / Blocks `include()`. **Mechanism 2** adds a `Related collections` section that surfaces collections with a reference field pointing to the parent collection; the system wires the filter automatically; runtime: `wixData.query().hasSome(referenceField, [parentIds])` batched across all rendered parent rows. |
 | **Scope** | Phase 1 |
 | **Priority** | Blocker |
 
@@ -117,7 +133,9 @@ Delta tags based on codebase scan of `wix-private/odeditor-packages` (HEAD `8b0a
 | **Intent Binding** | Render parent → child data on the canvas (Linked Intent ID: INT-001 / SUB-001a) |
 | **Trigger** | Builder selects the Nested Repeater and clicks `Connect data` (action bar or canvas hat). |
 
-**Happy Flow:**
+**Happy Flow — Mechanism 1 (forward reference via `This item` scope):**
+
+*Applies when the parent collection has an array field or multi-reference field pointing to the child collection (e.g. "Meals" has a `dishes` multi-reference field to "Dishes").*
 
 1. Builder selects the Nested Repeater (placed inside the Outer Repeater's item template).
 2. Builder initiates `Connect data`.
@@ -125,21 +143,39 @@ Delta tags based on codebase scan of `wix-private/odeditor-packages` (HEAD `8b0a
 4. System surfaces the **`This item`** scope at the top of the picker. Under it, system lists the Parent item's array fields and multi-reference fields, with hierarchy labels.
 5. Builder selects a Child array (or accepts the auto-selected first Child array — see FR-002).
 6. Builder applies the binding.
-7. System wires the Nested Repeater's `Items` to the selected Child array, scoped via the Parent row context.
+7. System wires the Nested Repeater's `Items` to the selected Child array, resolved per-Parent-row via `wixData.queryReferenced()` / `include()`.
 8. Canvas re-renders: each Parent row's Nested Repeater now displays the resolved child rows.
 9. Inspector opens on the Nested Repeater with `Properties` expanded; `Items` row shows the selected Child array with a `This item` scope badge.
+
+**Happy Flow — Mechanism 2 (reverse reference via linked context):**
+
+*Applies when the reference lives on the child side: the child collection has a reference field pointing back to the parent collection (e.g. "Dishes" collection has a `meal` reference field to "Meals"). The parent has no array or multi-reference field for dishes.*
+
+1. Builder selects the Nested Repeater (placed inside the Outer Repeater's item template).
+2. Builder initiates `Connect data`.
+3. System opens the floating binding panel scoped to the Nested Repeater.
+4. System surfaces the **`This item`** scope (Mechanism 1 path, greyed out or absent if no Child arrays exist on the parent) and a **`Related collections`** section listing all collections that have a reference field pointing to the Outer Repeater's parent collection, labelled with the connecting field name (e.g. "Dishes — via `meal` field").
+5. Builder selects a related collection from the `Related collections` section.
+6. System automatically infers the binding: Nested Repeater's `Items` will resolve to all records in the selected collection where the reference field equals the current Parent item's ID. No manual filter setup is required.
+7. Builder applies the binding.
+8. System creates a scoped per-row context for the related collection and wires the Nested Repeater's `Items` to it. Runtime query: `wixData.query('Dishes').hasSome('meal', [parentId1, parentId2, …]).find()` — batched across all currently rendered parent rows; never per-row sequential.
+9. Canvas re-renders: each Parent row's Nested Repeater shows only the records whose reference field matches that row's ID.
+10. Inspector opens on the Nested Repeater with `Items` row showing the related collection name and reference field path, with a relationship-link scope badge (e.g. `Dishes · via meal`).
 
 **Edge Cases:**
 
 | Category | Severity | Trigger | Expected System Behavior |
 |---|---|---|---|
-| Error States | Critical | Runtime fails to resolve referenced rows (network or data error) | System keeps the Nested Repeater visible with placeholder content for that Parent row only; surfaces a retriable failure indicator in the inspector; other rows remain functional. |
-| Empty States | Critical | Selected Child array exists but contains no entries for a given Parent row | System renders an empty Nested Repeater area for that row without collapsing the Parent row's layout (covered in detail by FR-012). |
-| Loading States | Important | Initial canvas render with many parent rows that each resolve a Child collection | System batches the cross-collection fetch via `include()` / `queryReferenced()`; never issues a per-row sequential query (no N+1). |
+| Error States | Critical | Runtime fails to resolve referenced rows (network or data error) — M1 or M2 | System keeps the Nested Repeater visible with placeholder content for that Parent row only; surfaces a retriable failure indicator in the inspector; other rows remain functional. |
+| Empty States | Critical | Selected Child array (M1) or related collection result set (M2) has no entries for a given Parent row | System renders an empty Nested Repeater area for that row without collapsing the Parent row's layout (covered in detail by FR-012). |
+| Loading States | Important | Initial canvas render with many parent rows — M1 | System batches the cross-collection fetch via `include()` / `queryReferenced()`; never issues a per-row sequential query (no N+1). |
+| Loading States | Important | Initial canvas render with many parent rows — M2 | System batches via a single `hasSome(referenceField, parentIds)` query; partitions results client-side by `referenceField` value; never issues a per-row sequential query (no N+1). |
 | Validation & Input | Critical | Builder attempts to bind `Items` to a non-array, non-multi-reference field | System blocks selection; non-list fields are not selectable in the picker. |
-| Boundary Conditions | Important | Parent collection has no array or multi-reference fields | System surfaces a clear empty-state message in the picker (covered by FR-011). |
-| Permission & Access Control | Important | The collection backing the Child collection is permission-gated and the editor user lacks read | System surfaces a permission-error indicator and disables Apply; PII / permissions design is required. |
-| Concurrent & State Changes | Important | The Outer Repeater's `Items` source is changed by another open editor session while the picker is open | System invalidates the open `This item` scope when reopened; if Apply is pressed against stale source, the binding fails gracefully and the picker reopens. |
+| Boundary Conditions | Important | Parent collection has no array or multi-reference fields (M1 path empty) AND no other collection has a reference field pointing to it (M2 path empty) | System surfaces the FR-011 empty state; both sections are empty; builder is offered a path to modify the parent collection schema or attach a different context. |
+| Boundary Conditions | Important | Multiple collections have a reference field pointing to the parent collection (M2) | All qualifying collections appear in the `Related collections` section, labelled with their connecting field. Builder picks. |
+| Boundary Conditions | Important | A collection has multiple reference fields pointing to the same parent collection (M2) | System lists the collection once per reference field (e.g. "Orders — via `billingCustomer`" and "Orders — via `shippingCustomer`"), so the builder can choose the correct relationship. |
+| Permission & Access Control | Important | The Child collection (M1) or related collection (M2) is permission-gated and the editor user lacks read | System surfaces a permission-error indicator and disables Apply; PII / permissions design is required. |
+| Concurrent & State Changes | Important | The Outer Repeater's `Items` source is changed by another open editor session while the picker is open | System invalidates the open `This item` scope and `Related collections` section when reopened; if Apply is pressed against a stale source, the binding fails gracefully and the picker reopens. |
 | Incomplete & Partial States | Important | Builder closes the binding panel without applying | System leaves the Nested Repeater unbound; no partial state is persisted. |
 
 **Desired Feelings in Output State:**
@@ -151,13 +187,13 @@ Delta tags based on codebase scan of `wix-private/odeditor-packages` (HEAD `8b0a
 
 | Aspect | Detail |
 |---|---|
-| **Impacted Areas** | Binding platform (floating binding panel, scope-badge mechanism), Repeater inspector (`renderSettingsRepeaterOnRepeater()`), CMS data-resolution runtime (`wixData.queryReferenced()` / Blocks `include()`), Repeater context card. |
-| **Required Capability Changes** | Add `This item` scope to the binding-picker scope handling. Surface array fields and multi-reference fields of the Parent item's collection at the top of the picker when the selected Repeater is nested. Wire the Nested Repeater's `Items` to a parent-row-scoped query. |
-| **Data & Storage Implications** | No new persistence model. The Nested Repeater's binding stores: source collection, field path (Child array or Multi-reference), and an implicit scope marker that the Items source resolves per-Parent-row at render time. |
-| **API Implications** | Reuse `wixData.queryReferenced()` for multi-reference resolution and the Blocks `include()` primitive for batched cross-collection fetch. **Do not** introduce a parallel runtime path for canvas binding — wrap the existing primitives. Resolution must be per-Parent-row but batched in a single query per page render where possible. |
-| **Permissions & PII Implications** | New design required. Carry forward the parent collection's read-permission model to the Child collection lookup. PII labels on referenced fields must propagate to the rendered Nested Repeater scope. |
-| **Observability & Testing Implications** | Log binding-apply events with `outerRepeaterId`, `nestedRepeaterId`, `parentCollection`, `childField`, and resolution-batch size. Add tests for: drop-into-item gesture, picker scope ordering, multi-reference vs. array selection parity, batched fetch correctness. |
-| **Dependencies & Rollout Notes** | Depends on the existing `This repeater` scope-badge work being shipped first (or in parallel). Gate behind a feature flag. Roll out to Studio 2 first; mobile-editor parity is a separate spec. |
+| **Impacted Areas** | Binding platform (floating binding panel, scope-badge mechanism, new `Related collections` section), Repeater inspector (`renderSettingsRepeaterOnRepeater()`), CMS data-resolution runtime (`wixData.queryReferenced()` / Blocks `include()` for M1; `wixData.query().hasSome()` for M2), Repeater context card. |
+| **Required Capability Changes** | **M1:** Add `This item` scope to the binding-picker scope handling; surface array fields and multi-reference fields of the Parent item's collection at the top of the picker. **M2:** Introspect the schema of all available collections at picker-open time to identify those with a reference field pointing to the parent collection; surface them in a `Related collections` section; automatically configure the per-row filter on Apply. Both mechanisms share the same parent-row context infrastructure (FR-003). |
+| **Data & Storage Implications** | **M1 binding stores:** source collection, field path (Child array or multi-reference), scope marker = `this_item`. **M2 binding stores:** related collection name, reference field name on the child, scope marker = `related_context`; the per-row filter is computed at render time from the parent item's ID, not persisted as a static filter. No new schema change required for either. |
+| **API Implications** | **M1:** `wixData.queryReferenced()` / `include()` batched per page render. **M2:** `wixData.query(childCollection).hasSome(referenceField, parentIds).find()` — a single query for all parent IDs currently in view; results are partitioned client-side by `referenceField` value to feed each parent row's Nested Repeater. **Do not** issue a per-row sequential query for either mechanism. |
+| **Permissions & PII Implications** | New design required for both mechanisms. M1: carry forward the parent collection's read-permission model to the Child collection. M2: apply the related collection's own read-permissions; the per-row filter does not bypass collection-level access control. PII labels propagate through both mechanisms. |
+| **Observability & Testing Implications** | Log binding-apply events with `outerRepeaterId`, `nestedRepeaterId`, `parentCollection`, `mechanism` (M1/M2), `childField` or `referenceField`, and resolution-batch size. Add tests for: M1 — drop-into-item, picker scope ordering, multi-reference vs. array parity, batched fetch; M2 — schema introspection correctness, related-collection discovery, `hasSome` batch query, per-row result partitioning, no N+1. |
+| **Dependencies & Rollout Notes** | Depends on the existing `This repeater` scope-badge work being shipped first (or in parallel). M2 schema introspection adds a picker-open latency cost — measure at p95 on collections with > 50 fields. Gate behind a feature flag. Roll out to Studio 2 first; mobile-editor parity is a separate spec. |
 
 ---
 
@@ -394,7 +430,7 @@ Delta tags based on codebase scan of `wix-private/odeditor-packages` (HEAD `8b0a
 |---|---|
 | **ReqID** | FR-006 |
 | **Description** | When a builder replaces or disconnects the Outer Repeater's `Items`, and that change would cascade-disconnect any inner bindings (including the Nested Repeater's `Items` and any grandchild bindings inside the Nested Repeater's items), the system warns the builder before applying the change. The warning includes an accurate count of affected inner bindings — including grandchildren. Cancel preserves all bindings. |
-| **Change vs. existing** | Extends [`blank-repeater-prd.md`](../../blank-repeater-prd.md) §7 (replace context warning) and §8 (disconnect Items) to count grandchild bindings. The cascade depth is now 2 — direct inner bindings + bindings inside Nested Repeater items. |
+| **Change vs. existing** | Extends [`blank-repeater-prd.md`](../../blank-repeater-prd.md) §7 (replace context warning) and §8 (disconnect Items) to count grandchild bindings. The cascade depth is now 3 — direct inner bindings + bindings inside Nested Repeater items + bindings inside the Deeply Nested Repeater items. |
 | **Scope** | Phase 1 |
 | **Priority** | Critical |
 
@@ -493,50 +529,68 @@ Undo persists in the editor undo stack (not only as a transient toast) so the bu
 
 ### 4.4 Stay Oriented at the Limits (INT-004)
 
-#### FR-009 — Enforce a depth limit (v1 = 2)
+#### FR-009 — Enforce a depth limit (v1 = 3)
 
 | Field | Value |
 |---|---|
 | **ReqID** | FR-009 |
-| **Description** | v1 supports nesting up to 2 levels (Outer Repeater → Nested Repeater). Attempts to nest a third level via drop or paste are blocked with clear messaging. |
-| **Change vs. existing** | New constraint. v1 ceiling matches the most realistic use cases (course → lesson, category → product, meal → dish, season → episode). Webflow ships 3 levels; reserve depth ≥3 for a future phase if data Q4 in [`data-analysis-plan-repeater-in-repeater.md`](../discovery/data-analysis-plan-repeater-in-repeater.md) shows meaningful demand. |
+| **Description** | v1 supports nesting up to 3 levels (Outer Repeater → Nested Repeater → Deeply Nested Repeater). Attempts to nest a fourth level via drop or paste are blocked with clear messaging. |
+| **Change vs. existing** | New constraint. v1 ceiling matches Webflow's 3-level cap and covers the most realistic use cases (e.g. category → product → variant, course → lesson → step, season → episode → scene). Reserve depth ≥ 4 for a future phase. |
 | **Scope** | Phase 1 |
 | **Priority** | Must have |
 
 ##### Use Cases
 
-**UC-1 — Drop blocked at depth 3**
+**UC-1 — Drop blocked at depth 4**
 
-System detects the third-level drop and blocks it with an explanation that v1 supports 2 levels.
+System detects the fourth-level drop and blocks it with an explanation that v1 supports 3 levels.
 
 **UC-2 — Inspector shows depth at the limit**
 
-When a Nested Repeater is selected at depth 2, inspector states "depth limit reached — adding a Repeater inside this one is not supported in v1."
+When a Repeater is selected at depth 3, inspector states "depth limit reached — adding a Repeater inside this one is not supported in v1."
 
-**Edge Cases:** Boundary — pasting a depth-3 subtree should also be blocked at the topmost violating level.
+**Edge Cases:** Boundary — pasting a depth-4 subtree should also be blocked at the topmost violating level.
 
 **Codebase Implications:** Depth check on drop and paste; depth-aware inspector copy.
 
 ---
 
-#### FR-010 — Surface items-per-parent cap (v1 = 100)
+#### FR-010 — Configurable item limit on Nested Repeater (1–100, default 10)
 
 | Field | Value |
 |---|---|
 | **ReqID** | FR-010 |
-| **Description** | The Nested Repeater renders up to 100 child items per Parent row (Webflow parity). When the resolved Child collection for a Parent row exceeds the cap, the system renders the first 100 (per the runtime sort) and surfaces a clear inspector message that the cap was reached for that parent row. Pagination semantics for Nested Repeaters are deferred to the existing pagination spec ([`product-spec-repeater-pagination.md`](product-spec-repeater-pagination.md)) which already branches via `renderSettingsRepeaterOnRepeater()`. |
-| **Change vs. existing** | New cap. Aligns with the runtime's batched-fetch primitive. |
+| **Description** | A Nested Repeater has no pagination — child items for each parent row load all at once, up to the configured item limit. The item limit is builder-controlled: range 1–100, default 10. It is stored on the Nested Repeater's context (`S.cfgValues[ctxId].pageSize`) and configured in the nested context config panel, following the same slider + number-input pattern as the base pagination spec (FR-004 of `product-spec-repeater-pagination.md`). The inspector shows the current limit as a read-only value with a direct link to the nested context config. There is no system-imposed truncation beyond what the builder configures — the builder decides the ceiling. |
+| **Change vs. existing** | New behavior for the nested case. Intentionally diverges from the Outer Repeater: the Outer retains the full pagination toggle (ON/OFF) from the base spec; the Nested Repeater has item-limit-only — no toggle, no load-more. This makes Wix materially better than Webflow (which hard-caps inner lists at 5 with no builder control) while keeping the default safe (10 items). |
 | **Scope** | Phase 1 |
 | **Priority** | Must have |
 
 ##### Use Cases
 
-**UC-1 — Cap surfaced when exceeded**
-**UC-2 — Cap not surfaced when not reached**
+**UC-1 — Item limit displayed in inspector**
 
-**Edge Cases:** Boundary at exactly 100 — show no warning. Empty Child array — handled by FR-012.
+Builder selects a Nested Repeater with `Items` bound. Inspector shows the item limit section: "Showing up to [N] items per parent row" as a read-only value, with "Edit in [Context name] configuration →" link. Default is 10 on first bind.
 
-**Codebase Implications:** Runtime enforcement of the cap; inspector messaging tied to per-parent-row cap status.
+**UC-2 — Builder raises the limit in context config**
+
+Builder clicks through to the nested context config. Slider (1–100) and number input let them set any value up to 100. If the new value causes the multiplicative total (outer × nested) to reach the warning threshold, FR-017 fires. No value is blocked — the builder decides.
+
+**UC-3 — Items beyond the limit are not rendered**
+
+If the Child collection for a parent row has more items than the configured limit, only the first N items (per the context's sort order) are rendered. The inspector notes: "Only showing the first [N] items. Raise the limit in [Context name configuration →] to show more."
+
+**Edge Cases:**
+
+| Category | Severity | Trigger | Expected System Behavior |
+|---|---|---|---|
+| Boundary Conditions | Important | Child collection has fewer items than the limit | All items render; no "cap reached" message shown. |
+| Boundary Conditions | Important | Builder sets limit to 100 and FR-017 warning fires | Warning is advisory; limit of 100 remains valid and is applied. |
+| Empty States | Critical | Child array is empty for a given parent row | FR-012 handles; no item-limit messaging needed. |
+| Concurrent & State Changes | Important | Outer Repeater's source changes; inherited context updates | Item limit on the Nested Repeater is preserved; it is stored on the nested context, not the outer. |
+
+**Desired Feelings in Output State:** In control (I set the number I want); informed (I know what's being cut off when the limit is hit).
+
+**Codebase Implications:** Item limit read from `S.cfgValues[ctxId].pageSize`; default initialized to 10 on first bind (not 25 — intentionally lower than the Outer Repeater's default). Inspector render: `renderSettingsRepeaterOnRepeater()` shows item-limit-only section (FR-016 handles the full render spec).
 
 ---
 
@@ -602,6 +656,294 @@ System renders each Parent row independently; empty cases preserve layout slot.
 
 ---
 
+### 4.5 AI-Assisted Nested Binding (INT-005)
+
+#### FR-014 — AI agent creates a nested Repeater structure from a natural language instruction
+
+| Field | Value |
+|---|---|
+| **ReqID** | FR-014 |
+| **Description** | A builder can instruct the Studio 2 AI agent in natural language (e.g. "show products under each category", "list lessons inside each course") and the agent interprets the instruction, creates the Outer Repeater and Nested Repeater structures, binds `Items` on both using the `This item` scope (FR-001 / FR-003), and presents the proposed result for builder review before committing to the canvas. The agent never silently commits — the builder must explicitly accept the proposed structure. |
+| **Change vs. existing** | Extends the blank-Repeater PRD's action-bar AI flow to the nested case. The single-Repeater AI binding path (blank-repeater-prd.md §AI Interactions) covers one level; this FR extends the same agent handler to plan and apply a two-or-three-level binding graph. |
+| **Scope** | Phase 1 |
+| **Priority** | Critical |
+
+##### Use Cases
+
+**UC-1 — Natural language instruction → nested Repeater structure**
+
+| Element | Value |
+|---|---|
+| **Use Case Goal** | Builder describes the parent → child relationship they want; the AI agent creates the binding graph without the builder knowing the `This item` scope exists. |
+| **Use Case Description** | Builder opens the Studio 2 AI agent panel (or action bar). They type: "Show each meal's dishes underneath it." The agent detects a "Meals" collection with a multi-reference field "Dishes", proposes creating an Outer Repeater bound to "Meals" and a Nested Repeater bound via `This item → Dishes`, renders a preview of the proposed structure (with placeholder rows), and waits for builder confirmation before applying. |
+| **Actor** | Studio User / Self-Creator / Partner |
+| **Intent Binding** | AI-assisted nested Repeater setup (Linked Intent ID: INT-005 / SUB-005a) |
+| **Trigger** | Builder types a natural-language instruction in the AI agent panel while on a page with at least one collection available. |
+
+**Happy Flow:**
+
+1. Builder opens the AI agent panel and describes the nested layout in plain language.
+2. Agent parses the instruction and identifies: parent collection, child relationship (array or multi-reference field), and nesting shape (2 or 3 levels).
+3. Agent proposes a structure: Outer Repeater bound to the parent collection + Nested Repeater(s) bound via `This item` scope, with layout derived from existing item template patterns.
+4. Agent renders a preview of the proposed canvas state (ghosted / annotated) with a clear description of what it will do: "I'll add a Repeater for Meals and nest a Repeater for each meal's Dishes. Is that right?"
+5. Builder reviews the preview. Builder can accept, modify the suggestion, or reject.
+6. On **Accept**: agent applies the bindings using the same primitives as FR-001 / FR-003; canvas re-renders with live data.
+7. On **Modify**: agent opens the binding picker pre-populated with the proposed selections; builder adjusts.
+8. On **Reject**: canvas state is unchanged; agent clears the proposal.
+
+**Edge Cases:**
+
+| Category | Severity | Trigger | Expected System Behavior |
+|---|---|---|---|
+| Validation & Input | Critical | Agent cannot find a matching parent → child relationship in the available collections | Agent states clearly what it could not find and suggests manual binding via the `Connect data` path. Never silently fails or creates a broken structure. |
+| Validation & Input | Critical | Instruction is ambiguous (multiple possible parent → child matches) | Agent surfaces the alternatives as a clarifying question, ranked by relevance, before proposing a structure. |
+| Boundary Conditions | Important | Instruction implies depth ≥ 4 (beyond the v1 limit) | Agent accepts the instruction, creates up to depth 3, and tells the builder: "I've set this up to 3 levels — deeper nesting isn't supported in v1." |
+| Empty States | Important | Parent collection has no array or multi-reference fields | Agent responds: "I couldn't find a child relationship in [Collection]. You can add a multi-reference field to connect it to another collection." |
+| Concurrent & State Changes | Important | Canvas has unsaved changes when agent proposes a structure | Agent previews the proposal over the current state; Accept only applies the binding changes, not a full canvas replace. |
+
+**Desired Feelings in Output State:** Delighted (the nested structure appeared from a sentence); confident (the AI showed its work before committing).
+
+**Codebase Implications:**
+
+| Aspect | Detail |
+|---|---|
+| **Impacted Areas** | Studio 2 AI agent handler, action-bar AI integration, binding platform (FR-001 / FR-003 primitives), canvas preview/ghost rendering. |
+| **Required Capability Changes** | Extend the AI agent's binding handler to plan multi-level binding graphs. Add a "propose and confirm" step before canvas commit. Reuse FR-001's `This item` scope and FR-003's inherited-context registration. |
+| **API Implications** | Same as FR-001. AI agent uses `wixData.queryReferenced()` / `include()` to validate the proposed binding before presenting the preview. |
+| **Observability & Testing Implications** | Track: instruction → proposal time, accept / modify / reject rates, binding success rate after accept. Test: ambiguous instructions, multi-level proposals, depth-limit hits, empty-collection responses. |
+| **Dependencies & Rollout Notes** | Depends on FR-001, FR-002, FR-003 (binding primitives and `This item` scope must be shipped first). Gate behind the same feature flag as FR-001. AI agent handler is a separate Studio 2 platform dependency — coordinate with the AI team. |
+
+---
+
+#### FR-015 — AI suggests a Child array binding when the `This item` picker opens
+
+| Field | Value |
+|---|---|
+| **ReqID** | FR-015 |
+| **Description** | When a builder opens the binding picker on a Nested Repeater and the `This item` scope is available, the AI agent surfaces a ranked suggestion for which Child array or Child collection to bind — based on semantic analysis of the parent collection's schema, the page's existing bindings, and the instruction context if a recent AI session exists. The suggestion is surfaced as a highlighted row at the top of the `This item` scope, clearly labeled as a suggestion. The builder can accept it in one click, or ignore it and select manually. The agent never auto-applies. |
+| **Change vs. existing** | Extends the `This item` scope (FR-001) with an AI-ranked suggestion row. Sibling to the existing auto-bind behavior (FR-002) — auto-bind fires on drop without a picker; this suggestion fires when the picker is opened manually. |
+| **Scope** | Phase 1 |
+| **Priority** | Must have |
+
+##### Use Cases
+
+**UC-1 — AI suggestion row appears in the `This item` picker**
+
+The picker opens on a Nested Repeater. The `This item` scope shows a highlighted row: "Suggested: Dishes (multi-reference)" with a one-click Accept. Other Child arrays are listed below.
+
+**UC-2 — Builder accepts the suggestion**
+
+Builder clicks Accept. System applies the binding as if the builder had selected that row manually. No additional confirmation needed.
+
+**UC-3 — Builder ignores the suggestion and selects manually**
+
+Builder clicks a different row. The suggestion is dismissed silently. No friction added.
+
+**Edge Cases:**
+
+| Category | Severity | Trigger | Expected System Behavior |
+|---|---|---|---|
+| Validation & Input | Important | AI has no confident suggestion (low schema signal) | No suggestion row is shown; picker renders the standard `This item` field list only. |
+| Concurrent & State Changes | Important | Parent collection schema changes after the picker opens | Suggestion is invalidated; picker refreshes; no stale suggestion is shown. |
+
+**Desired Feelings in Output State:** Efficient (right answer surfaced first); in control (builder chose it, not the AI).
+
+**Codebase Implications:**
+
+| Aspect | Detail |
+|---|---|
+| **Impacted Areas** | `This item` scope in `CMS/propertyBindingPanel` (external CMS packages); AI suggestion service integration. |
+| **Required Capability Changes** | Add a ranked-suggestion row to the `This item` scope UI. Wire the AI suggestion service to the picker's open event. |
+| **Dependencies & Rollout Notes** | Depends on FR-001 (`This item` scope must exist). Degrade gracefully if the AI suggestion service is unavailable — picker renders normally without the suggestion row. |
+
+---
+
+### 4.6 Item Limit for Nested Repeater Items (INT-006)
+
+#### FR-016 — Item-limit-only inspector section for Nested Repeaters
+
+| Field | Value |
+|---|---|
+| **ReqID** | FR-016 |
+| **Description** | The `renderSettingsRepeaterOnRepeater()` render path shows an item-limit section in the inspector — **no pagination toggle, no load-more**. Child items for each parent row always load all at once up to the configured limit. This is an intentional asymmetry: the Outer Repeater retains the full pagination toggle from the base spec (`renderSettings()`); the Nested Repeater shows item-limit only. The section is hidden when `Items` is unbound (same hide-when-unbound guard as the base spec). The limit value and the "Edit in [Context name] configuration →" link follow the same pattern as FR-003 / FR-004 of the base pagination spec, but without the toggle branch. |
+| **Change vs. existing** | `renderSettingsRepeaterOnRepeater()` exists in the codebase but does not implement an item-limit section. This FR adds it. The section is simpler than `renderSettings()` — no toggle state, no items-per-load vs. item-limit label switching. The context config panel for a nested context shows only the "Item limit" label (not "Items per load") and the slider (1–100) with default 10. |
+| **Scope** | Phase 1 |
+| **Priority** | Must have |
+
+##### Use Cases
+
+**UC-1 — Item limit section in Nested Repeater inspector**
+
+| Element | Value |
+|---|---|
+| **Use Case Goal** | Builder sees and can adjust the item limit for a Nested Repeater in one click, without encountering a pagination toggle that doesn't apply. |
+| **Use Case Description** | The builder selects a Nested Repeater with `Items` bound. The inspector shows an "Item limit" section: the current limit value (read-only) and an "Edit in [Context name] configuration →" link. No toggle is present. The note below reads: "Child items load all at once per parent row, up to this limit." |
+| **Actor** | Studio User / Self-Creator / Partner |
+| **Intent Binding** | Configurable item limit (Linked Intent ID: INT-006 / SUB-006a, b) |
+| **Trigger** | Builder selects a bound Nested Repeater. |
+
+**Happy Flow:**
+
+1. Builder selects the Nested Repeater with `Items` bound.
+2. Inspector shows the "Item limit" section. Current value displayed read-only (default: 10 on first bind).
+3. Note reads: "Child items load all at once per parent row, up to this limit."
+4. Builder clicks "Edit in [Context name] configuration →".
+5. Nested context config panel opens, showing "Item limit" slider (1–100) and number input synced to current value.
+6. Builder adjusts the value. If the multiplicative total (outer items × new limit) reaches the warning threshold, FR-017 fires inline.
+7. Inspector read-only value updates in real time to reflect the change.
+
+**UC-2 — Item limit section hidden when `Items` is unbound**
+
+Mirrors base-spec FR-006 behavior: section is absent until `Items` is bound. On disconnect, section disappears; stored limit value is preserved for re-bind.
+
+**UC-3 — Default 10 on first bind**
+
+When `Items` is bound for the first time on a Nested Repeater, the context initializes with item limit = 10 (not 25 — intentionally conservative given no pagination safety net).
+
+**Edge Cases:**
+
+| Category | Severity | Trigger | Expected System Behavior |
+|---|---|---|---|
+| Boundary Conditions | Critical | Builder enters a value above 100 | Clamped to 100 (slider maximum). |
+| Boundary Conditions | Critical | Builder enters 0 or negative | Clamped to 1 (minimum). |
+| Concurrent & State Changes | Important | Outer Repeater's pagination settings change | Nested Repeater's item limit is unaffected; stored on nested context independently. |
+| Boundary Conditions | Important | Builder copies a Nested Repeater to a different Outer Repeater | Stored item limit is preserved; inherited context updates; FR-017 warning recomputes with the new outer's configured count. |
+
+**Desired Feelings in Output State:** Clear (no confusing toggle that doesn't apply); in control (I set the number I want and I know what it costs).
+
+**Codebase Implications:**
+
+| Aspect | Detail |
+|---|---|
+| **Impacted Areas** | `renderSettingsRepeaterOnRepeater()` in `wix-private/odeditor-packages`; `renderCtxSettings(ctxId)` context config panel; `S.cfgValues[ctxId].pageSize`. |
+| **Required Capability Changes** | Add item-limit section to `renderSettingsRepeaterOnRepeater()`. No toggle branch needed. Context config for a nested context always shows "Item limit" label (never "Items per load"). Initialize `pageSize` to 10 on first bind for nested contexts (vs. 25 for Outer). Apply hide-when-unbound gate (`S.bindings[repId + '\|Items']` truthy check). |
+| **Data & Storage Implications** | Reuses `S.cfgValues[ctxId].pageSize`. No new state fields. Default value (10 vs. 25) is the only storage difference from the Outer. |
+| **API Implications** | None new. The item limit is applied at the data-fetch layer as the query page size per parent row. |
+| **Observability & Testing Implications** | Test: section hidden when unbound; default = 10 on first bind; limit preserved on disconnect/re-bind; slider clamps at 1 and 100; no toggle present; copy says "Item limit" not "Items per load"; Outer Repeater's pagination section is unaffected. |
+| **Dependencies & Rollout Notes** | `renderSettingsRepeaterOnRepeater()` is the established code path — this is an additive change. Intentional asymmetry with `renderSettings()` is by design; do not "unify" the two paths — they serve different UX models. Same feature flag as FR-001. |
+
+---
+
+#### FR-017 — Multiplicative performance warning for Nested Repeater item limits
+
+| Field | Value |
+|---|---|
+| **ReqID** | FR-017 |
+| **Description** | Because Nested Repeaters have no pagination, all child items load at once per parent row on every page render. The real cost is not the nested limit in isolation — it is the **combination** of the Outer Repeater's visible item count × the Nested Repeater's item limit. The nested context config panel always shows a multiplicative estimate so the builder can see the real cost. An amber warning fires when the combined total exceeds 200 items. The Outer Repeater's existing performance warning (> 50 items, from the base pagination spec) is unchanged. |
+| **Change vs. existing** | New behavior for the nested context config panel. The base spec fires a single-level warning at > 50. This FR adds a combined-total warning that references both the Outer's configured item count and the Nested limit. Warning threshold is 200 combined items (open question — see OQ-1). |
+| **Scope** | Phase 1 |
+| **Priority** | Must have |
+
+##### Use Cases
+
+**UC-1 — Multiplicative estimate always visible in the nested context config**
+
+| Element | Value |
+|---|---|
+| **Use Case Goal** | Builder always knows the real page-load cost of their nested item limit before publishing. |
+| **Use Case Description** | Builder opens the nested context config panel. Below the item limit slider, the system shows an informational line: "Your outer Repeater shows up to [N] items. With [M] child items each, that's ~[N×M] items loading per page." This line is always shown when the Outer's count is known — not only when a threshold is crossed. |
+| **Actor** | Studio User / Self-Creator / Partner |
+| **Intent Binding** | Performance warning (Linked Intent ID: INT-006 / SUB-006c) |
+| **Trigger** | Builder opens the nested context config panel. |
+
+**Happy Flow:**
+
+1. Builder opens the nested context config panel (via "Edit in [Context name] configuration →").
+2. System reads the Outer Repeater's configured item count: items-per-load if pagination is ON, item limit if pagination is OFF.
+3. Below the item-limit slider, system shows: "Your outer Repeater shows up to [N] items. With [M] child items each, that's ~[N×M] items per page load."
+4. If N × M > 200: line turns amber with added copy: "This may slow down your page. Consider reducing."
+5. For a 3-level structure (Outer → Nested → Deeply Nested): estimate is N × M × P; the warning fires when N × M × P > 200.
+6. Estimate updates in real time as the builder moves the slider.
+7. Warning is advisory — it does not block saving or publishing.
+
+**UC-2 — Estimate uses the Outer's actual configured count, not a fixed number**
+
+If the Outer Repeater shows 10 items and the Nested limit = 10, the estimate is 100 — well under the threshold, no warning. The same nested limit of 10 against an Outer showing 50 items produces an estimate of 500, which fires the warning. The warning is contextual, not a fixed per-level threshold.
+
+**Edge Cases:**
+
+| Category | Severity | Trigger | Expected System Behavior |
+|---|---|---|---|
+| Boundary Conditions | Important | Outer Repeater's item count cannot be determined (e.g. unbound or count not yet resolved) | Show estimate as "up to [M] items per parent row" without the multiplied total; no warning fires. |
+| Boundary Conditions | Important | Outer has pagination OFF; its item limit is the multiplier | System uses the Outer's item limit (not items-per-load) in the estimate, since all of those items are visible. |
+| Boundary Conditions | Important | Builder sets nested limit to 100 and Outer shows 10 items — total = 1,000 | Warning fires at amber; copy shows the 1,000 estimate; builder can keep the setting. |
+| Validation & Input | Important | Builder reduces limit so total drops below 200 | Warning clears in real time; estimate line reverts to neutral styling. |
+| Empty States | Nice-to-Have | Parent collections have no live data yet | Estimate based on configured counts, not live data. Note: "Estimate based on your settings." |
+
+**Desired Feelings in Output State:** Informed (I know the real cost); empowered (the warning informs me, it doesn't stop me).
+
+**Codebase Implications:**
+
+| Aspect | Detail |
+|---|---|
+| **Impacted Areas** | `renderCtxSettings(ctxId)` context config panel when rendering for a nested context; ancestor-Repeater lookup to read the Outer's configured count. |
+| **Required Capability Changes** | When rendering the context config for a nested Repeater's context: (1) detect that the context is attached to a nested Repeater; (2) walk up to find the Outer Repeater and read `S.cfgValues[outerCtxId].pageSize` and `S.repPagination[outerRepId].mode`; (3) render the multiplicative estimate line below the slider; (4) apply amber styling when N × M (× P) > 200. |
+| **API Implications** | None new. Reads from existing `S.cfgValues` and `S.repPagination`. |
+| **Observability & Testing Implications** | Test: estimate correct for 2-level and 3-level nesting; updates in real time; warning fires at > 200 combined; clears when below 200; Outer's warning threshold (> 50) is not regressed; estimate absent when Outer count is unknown. |
+| **Dependencies & Rollout Notes** | Depends on FR-016. Same feature flag. The 200-item warning threshold is an open question — confirm with engineering against runtime benchmarks (see OQ-1). |
+
+---
+
+#### FR-018 — Warning and combined bind CTA when binding a child element inside an unconnected Nested Repeater
+
+| Field | Value |
+|---|---|
+| **ReqID** | FR-018 |
+| **Description** | When a builder opens the binding picker for a child element (e.g. Image, Text, Button) inside a Nested Repeater that is not yet connected to data, the inspector shows an inline warning: "The parent repeater is not connected to data. Bindings are preserved but all items will show the same content — connect the repeater to an array to iterate." The binding picker's apply CTA becomes "Bind · [field] + Repeater → items", which in one action both binds the child property and connects the Nested Repeater's `Items` to the selected collection. If the builder applies the combined CTA, the Nested Repeater is connected to the selected collection and the child binding is applied as if the Nested Repeater had already been connected first. The warning and combined CTA are omitted when the parent Nested Repeater is already connected. |
+| **Change vs. existing** | The existing binding picker CTA only applies the child property binding. This FR adds Repeater-connection awareness to the picker so the CTA can optionally wire up the parent Nested Repeater's `Items` simultaneously. The warning banner is new in the child-element binding panel. |
+| **Scope** | Phase 1 |
+| **Priority** | Must have |
+
+##### Use Cases
+
+**UC-1 — Warning shown on child element binding panel when parent Nested Repeater is unconnected**
+
+| Element | Value |
+|---|---|
+| **Use Case Goal** | The builder understands why all Nested Repeater items look identical before applying a binding. |
+| **Use Case Description** | The builder selects an Image inside a Nested Repeater that has no `Items` binding. They open the binding picker (Settings panel → Image → connect icon). An amber warning banner appears above the picker fields: "The parent repeater is not connected to data. Bindings are preserved but all items will show the same content — connect the repeater to an array to iterate." The builder can still pick a source and field normally. |
+| **Actor** | Studio User / Self-Creator / Partner |
+| **Intent Binding** | Combined bind + connect (Linked Intent ID: INT-002 / SUB-002d) |
+| **Trigger** | Opening the binding picker for any child element whose immediate parent Repeater has no `Items` binding. |
+
+**UC-2 — Combined "Bind [field] + Repeater → items" CTA connects both in one action**
+
+| Element | Value |
+|---|---|
+| **Use Case Goal** | The builder completes a functional binding without leaving the child-element binding flow to manually connect the Nested Repeater first. |
+| **Use Case Description** | After selecting Source = "Articles" and Field = "thumbnail" in the picker (UC-1 state), the apply button reads "Bind · thumbnail + Repeater → items". The builder clicks it. The system: (1) connects the Nested Repeater's `Items` to the "Articles" collection, (2) applies the `thumbnail` binding to the Image, (3) re-renders the Nested Repeater with live data, and (4) dismisses the warning banner. The builder is not required to take any additional steps. |
+| **Actor** | Studio User / Self-Creator / Partner |
+| **Intent Binding** | Combined bind + connect (Linked Intent ID: INT-002 / SUB-002d) |
+| **Trigger** | Builder clicks the combined apply CTA in the binding picker when the parent Nested Repeater is unconnected. |
+
+**UC-3 — Warning omitted when parent Repeater is already connected**
+
+The warning banner and combined CTA are not shown when the parent Nested Repeater already has an `Items` binding. The picker renders with its standard single-action apply CTA.
+
+**Edge Cases:**
+
+| Category | Severity | Trigger | Expected System Behavior |
+|---|---|---|---|
+| Empty States | Critical | Parent Nested Repeater has no available collections to connect to | Warning still shows; combined CTA is disabled with a tooltip explaining no collections are available. |
+| Concurrent & State Changes | Important | Another editor action connects the Nested Repeater while the picker is open | Warning banner disappears in real time; CTA reverts to standard single-action form. |
+| Boundary Conditions | Important | Child element is nested two levels deep (e.g. inside a Deeply Nested Repeater whose immediate parent is also unconnected) | Warning and combined CTA apply to the immediate unconnected parent Repeater only; does not cascade-connect multiple levels in a single action. |
+| Boundary Conditions | Nice-to-Have | Builder selects a different collection in the picker than the one the Nested Repeater would naturally inherit | Combined CTA still applies; Nested Repeater is connected to the builder-selected collection, which may or may not match the Outer Repeater's child arrays. FR-013 mismatch indicator fires if the context diverges. |
+
+**Desired Feelings in Output State:** Oriented (I understand why the data looks wrong); efficient (one action fixes both issues).
+
+**Codebase Implications:**
+
+| Aspect | Detail |
+|---|---|
+| **Impacted Areas** | `CMS/propertyBindingPanel` (apply-CTA render path); binding picker wrapper in child-element inspector panels. |
+| **Required Capability Changes** | On picker open: (1) check whether the immediate parent Repeater has an `Items` binding via `ComponentDataContextAPI.hasBindings`; (2) if unconnected, inject the warning banner and switch the apply CTA label to "Bind · [field] + Repeater → items"; (3) on apply, call the existing Repeater connect flow (same path as FR-001) then apply the child property binding. |
+| **API Implications** | None new; reuses `ComponentDataContextAPI` and the existing property binding apply path. |
+| **Permissions & PII Implications** | Same as FR-001. |
+| **Observability & Testing Implications** | Track `child_bind_combined_cta_shown`, `child_bind_combined_cta_applied`, `child_bind_combined_cta_dismissed` (picker closed without applying). Test: warning shown only when parent unconnected; CTA label switches correctly; combined apply connects Repeater and binds child; re-open after combined apply shows no warning. |
+| **Dependencies & Rollout Notes** | Depends on FR-001 (Repeater connect primitives). Same feature flag. |
+
+---
+
 ## 5. Non-Functional Requirements
 
 ### 5.1 Reliability
@@ -636,7 +978,7 @@ System renders each Parent row independently; empty cases preserve layout slot.
 |---|---|
 | **ID** | NFR-003 |
 | **Category** | Performance |
-| **Description** | A Live Site page rendering an Outer Repeater with a Nested Repeater of typical depth (2 levels, ≤25 Parent rows × ≤10 child rows each = up to 250 inner items) hits LCP ≤ 2.5s and INP ≤ 200ms on a median Studio 2 visitor device. CHR ≥ 90% on warm caches. |
+| **Description** | A Live Site page rendering an Outer Repeater with a Nested Repeater of typical depth (3 levels, ≤10 Parent rows × ≤10 child rows × ≤10 grandchild rows = up to 1,000 inner items) hits LCP ≤ 2.5s and INP ≤ 200ms on a median Studio 2 visitor device. CHR ≥ 90% on warm caches. |
 | **Suggested Threshold** | LCP ≤ 2.5s, INP ≤ 200ms, CLS ≤ 0.1 on Live Sites; Editor canvas first-paint of a nested layout ≤ 1.5s. |
 | **Scope / Phase** | Phase 1 — Project-wide; Live Sites + Editor |
 | **Rationale** | Bubble's documented "every nested search multiplies DB calls" is the cautionary signal. Wix must batch the cross-collection fetch via the existing `include()` / `queryReferenced()` primitive. Performance is the deciding factor for whether nested Repeaters are usable for catalogs and listings. |
@@ -751,7 +1093,7 @@ System renders each Parent row independently; empty cases preserve layout slot.
 |---|---|
 | **ID** | NFR-012 |
 | **Category** | Documentation & Education |
-| **Description** | At GA, the Wix Help Center has at least one canonical user-facing article covering nested Repeaters end-to-end (concept, drop-into-item gesture, picker `This item` scope, depth limit, items-per-parent cap, replace / disconnect cascade). The existing *"CMS Request: Attaching a Repeater onto Another Repeater"* page is updated or replaced. Customer Care is trained before GA on the new flow and how to migrate users from the three workarounds. |
+| **Description** | At GA, the Wix Help Center has at least one canonical user-facing article covering nested Repeaters end-to-end (concept, drop-into-item gesture, picker `This item` scope, depth limit, item limit per nested level, replace / disconnect cascade). The article should call out how Wix's item limit model (builder-configurable 1–100 vs. Webflow's fixed 5) works and how to use it safely. The existing *"CMS Request: Attaching a Repeater onto Another Repeater"* page is updated or replaced. Customer Care is trained before GA on the new flow and how to migrate users from the three workarounds. |
 | **Suggested Threshold** | 1 canonical KB article + Customer Care runbook + at least 3 vertical-specific examples (Stores, Restaurants, Bookings) ready at GA. |
 | **Scope / Phase** | Phase 1 |
 | **Rationale** | The Help Center has carried the request for years; users will look there first when the feature ships. |
@@ -764,8 +1106,8 @@ System renders each Parent row independently; empty cases preserve layout slot.
 |---|---|
 | **ID** | NFR-013 |
 | **Category** | Supportability |
-| **Description** | The system emits structured logs for: drop-into-item nesting events, auto-bind apply / skip (with reason), manual-bind apply, inherit / un-inherit, replace / disconnect (with cascade counts), depth-limit and items-per-parent-cap hits. All events carry a correlation ID and are queryable for the data plan in [`data-analysis-plan-repeater-in-repeater.md`](../discovery/data-analysis-plan-repeater-in-repeater.md). |
-| **Suggested Threshold** | 100% of FR-001…FR-013 lifecycle events instrumented; logs queryable within ≤ 1 hour of emission. |
+| **Description** | The system emits structured logs for: drop-into-item nesting events, auto-bind apply / skip (with reason), manual-bind apply, inherit / un-inherit, replace / disconnect (with cascade counts), depth-limit hits, item-limit changes per nested level (with the new value and the computed multiplicative estimate at time of change), and multiplicative performance warning impressions (with the threshold-crossing value). All events carry a correlation ID and are queryable for the data plan in [`data-analysis-plan-repeater-in-repeater.md`](../discovery/data-analysis-plan-repeater-in-repeater.md). |
+| **Suggested Threshold** | 100% of FR-001…FR-017 lifecycle events instrumented; logs queryable within ≤ 1 hour of emission. |
 | **Scope / Phase** | Phase 1 — Project-wide |
 | **Rationale** | The data plan's Q1 (workaround attempts) and Q4 (depth distribution) cannot be answered without these events. Observability is not optional; it is the validation surface. |
 
@@ -775,13 +1117,11 @@ System renders each Parent row independently; empty cases preserve layout slot.
 
 | Item | Reason for deferral |
 |---|---|
-| AI-assisted nested binding | Scope follows the blank-Repeater PRD's AI deferral. A separate AI section/PRD will cover action-bar AI, AI binding, and AI field-insertion for nested Repeaters. |
-| Depth ≥ 3 levels | v1 ships 2 levels. Q4 in the data analysis plan should size demand for depth ≥ 3 before expanding. Webflow's 3-level cap is the natural next stretch. |
+| Depth ≥ 4 levels | v1 ships 3 levels (Webflow parity). Reserve depth ≥ 4 for a future phase; size demand via data plan Q4 before expanding. |
 | Mobile editor parity | Mobile Repeater has its own API surface. A separate spec covers mobile parity. |
 | Tables, Galleries, Charts, and other repeating-but-not-Repeater elements | Out of scope for this PRD. Flagged for follow-up work. |
 | Nested Repeaters inside global sections | A **global section** is a reusable Studio 2 block shared across pages. Because a global section has no stable parent data context — it can be placed on any page, inside any Outer Repeater or none — propagating the parent row context into it reliably is out of scope for v1. The `This item` scope will not appear in the binding picker when the Repeater lives inside a global section; the inspector should surface a clear explanation. Matches Webflow's rule: nested Collection Lists cannot live inside Components. Revisit in a later phase. |
 | Auto-migration of existing multi-dataset workaround sites | A "convert" affordance is potentially valuable but requires the data plan's Q1 results to size the affected base. Defer until that data is available. |
-| Pagination behavior changes for Nested Repeaters | Already specified in [`product-spec-repeater-pagination.md`](product-spec-repeater-pagination.md) via `renderSettingsRepeaterOnRepeater()`. This PRD does not modify pagination semantics. |
 
 ---
 
@@ -789,7 +1129,7 @@ System renders each Parent row independently; empty cases preserve layout slot.
 
 | # | Question | Resolution path |
 |---|---|---|
-| 1 | Items-per-parent cap value — 100 (Webflow parity) vs. tighter / looser | Engineering input on runtime guarantees + data Q4 (depth distribution) |
+| 1 | FR-017 warning threshold — 200 combined items (outer × nested) | Engineering input needed: confirm the runtime handles the common cases (e.g. 25 outer × 10 nested = 250 items) without perceptible latency on a median device; calibrate the threshold against real benchmark data. Currently set at 200 as a starting point. Worst-case at 3 levels × 100 each = 1M items is technically possible but only reachable by a builder who ignores the warning and raises all levels to max — confirm the batched-fetch primitive handles realistic sub-trees (e.g. 25 × 25 × 25 = 15,625 items) safely. |
 | 2 | Should the system block the `This item` binding scope inside global sections at the editor layer, or merely degrade at runtime? | Engineering decision; recommend blocking at the editor layer — surface an explanatory message in the inspector rather than a silent runtime failure |
 | 3 | Existing-workaround migration — auto-convert, "convert" affordance, or leave alone? | Defer until data plan Q1 sizes the affected base |
 | 4 | `onItemUpdated` interplay with nested Repeaters — does the Nested Repeater fire `onItemReady` per Parent row? | Coordinate with the repeater-event-handlers PRD |

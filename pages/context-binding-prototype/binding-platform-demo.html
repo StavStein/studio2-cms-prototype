@@ -851,6 +851,44 @@
         background: color-mix(in srgb, #e84393 5%, transparent);
         pointer-events: none;
       }
+      .rir-drop-zone {
+        border: 2px dashed var(--b2);
+        border-radius: 8px;
+        padding: 12px 8px;
+        text-align: center;
+        color: var(--t3);
+        font-size: 10px;
+        transition: all .15s;
+        user-select: none;
+        cursor: default;
+      }
+      .rir-drop-zone.rir-drop-active {
+        border-color: var(--acc);
+        background: var(--acc-d);
+        color: var(--acc);
+        border-style: solid;
+      }
+
+      .rir-drop-zone[data-blocked] {
+        opacity: .4;
+        cursor: not-allowed;
+      }
+      .rir-drop-zone.rir-drop-blocked {
+        border-color: #ef4444;
+        background: color-mix(in srgb, #ef4444 6%, transparent);
+        color: #ef4444;
+        border-style: solid;
+      }
+      .rep-item.rir-drop-active {
+        outline: 2px solid var(--acc);
+        outline-offset: -2px;
+        background: var(--acc-d);
+      }
+      .rep-item.rir-drop-blocked {
+        outline: 2px solid #ef4444;
+        outline-offset: -2px;
+        background: color-mix(in srgb, #ef4444 6%, transparent);
+      }
       .el-drag-ghost {
         position: fixed;
         pointer-events: none;
@@ -9571,6 +9609,7 @@
             <div class="pp-group">Explorations</div>
             <div class="pp-sub" onclick="selectPage(this, 'Items Config')">⚡ Items Config</div>
             <div class="pp-sub" onclick="selectPage(this, 'Services')">🧘 Services</div>
+            <div class="pp-sub" onclick="selectPage(this, 'Repeater in Repeater')">↻ Repeater in Repeater</div>
             <div class="pp-group">Input Components</div>
             <div class="pp-sub" onclick="selectPage(this, 'Dropdown Component')">
               📋 Dropdown Component
@@ -22857,6 +22896,42 @@
           </div>
         </div>
 
+        <!-- REPEATER IN REPEATER PAGE -->
+        <div class="items-page" id="rir-page">
+          <div class="page-sel-bar" id="psb-rir" onclick="selectPageEl(event, 'page-rir')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <path d="M3 9h18" />
+            </svg>
+            Page · Repeater in Repeater
+          </div>
+
+          <!-- Section M1 -->
+          <div class="c-section" id="sec-rir" onclick="selEl(event, 'sec-rir')" style="margin: 16px">
+            <div class="ctx-pill" id="pill-sec-rir"></div>
+            <div style="padding: 20px 24px 4px; display:flex; align-items:baseline; gap:10px">
+              <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-weight:700;font-size:17px;color:var(--t1)">
+                Mechanism 1 — Sub-array binding
+              </div>
+              <span style="display:inline-block;background:#7c3aed18;color:#7c3aed;font-size:9px;padding:1px 7px;border-radius:3px;font-weight:700">M1</span>
+            </div>
+            <div class="s-body"></div>
+          </div>
+
+          <!-- Section M2 -->
+          <div class="c-section" id="sec-rir-m2" onclick="selEl(event, 'sec-rir-m2')" style="margin: 16px">
+            <div class="ctx-pill" id="pill-sec-rir-m2"></div>
+            <div style="padding: 20px 24px 4px; display:flex; align-items:baseline; gap:10px">
+              <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-weight:700;font-size:17px;color:var(--t1)">
+                Mechanism 2 — Separate context + filter
+              </div>
+              <span style="display:inline-block;background:#0ea5e918;color:#0369a1;font-size:9px;padding:1px 7px;border-radius:3px;font-weight:700">M2</span>
+            </div>
+            <div class="s-body"></div>
+          </div>
+
+        </div>
+
         <!-- DEMO PAGE -->
         <div class="canvas-inner hidden-page" id="demo-page">
           <div class="page-sel-bar" id="psb-demo" onclick="selectPageEl(event, 'page-demo')">
@@ -26994,6 +27069,112 @@
                 { name: 'allergenName', type: 'string', sample: '"Gluten"' },
                 { name: 'allergenIcon', type: 'string', sample: '"🌾"' },
                 { name: 'dishRef', type: 'reference', sample: '[Dish item]' },
+                ...CMS_ITEM_SYSTEM_FIELDS,
+              ],
+            },
+            ...CMS_COLLECTION_FIELDS,
+          ],
+          itemActions: CMS_ITEM_ACTIONS,
+          contextActions: CMS_CONTEXT_ACTIONS,
+          metadata: [],
+          config: [],
+        },
+
+        // ── Repeater in Repeater demo ──
+        {
+          id: 'cms-rir-categories',
+          name: 'Categories',
+          icon: '🍽',
+          type: 'list',
+          source: 'CMS',
+          group: 'CMS',
+          itemCount: 3,
+          description: 'Menu categories — Starters, Mains, Desserts. Each category has a multi-reference field linking to Dishes (M1), and dishes can also be found via their reverse reference back to this category (M2).',
+          fields: [
+            ...CMS_LIST_STATES,
+            {
+              name: 'items',
+              type: 'array',
+              sample: '[{name, description, dishes, …}]',
+              itemFields: [
+                { name: 'name', type: 'string', sample: '"Starters"' },
+                { name: 'description', type: 'string', sample: '"Light appetizers to start your meal"' },
+                { name: 'image', type: 'image', sample: '[img url]' },
+                {
+                  name: 'dishes',
+                  type: 'multiReference',
+                  referencedCollection: 'cms-rir-dishes',
+                  sample: '[{name, price, …}]',
+                  description: 'Dishes linked to this category (multi-reference field on Categories)',
+                  refFields: [
+                    { name: 'name', type: 'string', sample: '"Bruschetta"' },
+                    { name: 'description', type: 'string', sample: '"Toasted bread with tomatoes"' },
+                    { name: 'price', type: 'number', sample: '"$8.50"' },
+                    { name: 'image', type: 'image', sample: '[img url]' },
+                    { name: 'tags', type: 'array', sample: '["Vegetarian","GF"]', itemFields: [
+                      { name: 'label', type: 'string', sample: '"Vegetarian"' },
+                    ]},
+                    ...CMS_ITEM_SYSTEM_FIELDS,
+                  ],
+                },
+                {
+                  name: 'dishesViaCategory',
+                  type: 'multiReference',
+                  isReverseRef: true,
+                  referencedCollection: 'cms-rir-dishes',
+                  sample: '[{name, price, …}]',
+                  description: 'Dishes where category = this item (reverse reference from Dishes.category)',
+                  refFields: [
+                    { name: 'name', type: 'string', sample: '"Bruschetta"' },
+                    { name: 'description', type: 'string', sample: '"Toasted bread with tomatoes"' },
+                    { name: 'price', type: 'number', sample: '"$8.50"' },
+                    { name: 'image', type: 'image', sample: '[img url]' },
+                    { name: 'tags', type: 'array', sample: '["Vegetarian","GF"]', itemFields: [
+                      { name: 'label', type: 'string', sample: '"Vegetarian"' },
+                    ]},
+                    ...CMS_ITEM_SYSTEM_FIELDS,
+                  ],
+                },
+                ...CMS_ITEM_SYSTEM_FIELDS,
+              ],
+            },
+            ...CMS_COLLECTION_FIELDS,
+          ],
+          itemActions: CMS_ITEM_ACTIONS,
+          contextActions: CMS_CONTEXT_ACTIONS,
+          metadata: [],
+          config: [],
+        },
+        {
+          id: 'cms-rir-dishes',
+          name: 'Dishes',
+          icon: '🥘',
+          type: 'list',
+          source: 'CMS',
+          group: 'CMS',
+          itemCount: 9,
+          description: 'Individual dishes, each with a reference back to their parent category. Used by M2 (reverse reference) to show dishes per category.',
+          fields: [
+            ...CMS_LIST_STATES,
+            {
+              name: 'items',
+              type: 'array',
+              sample: '[{name, price, category, …}]',
+              itemFields: [
+                { name: 'name', type: 'string', sample: '"Bruschetta"' },
+                { name: 'description', type: 'string', sample: '"Toasted bread with tomatoes"' },
+                { name: 'price', type: 'number', sample: '"$8.50"' },
+                { name: 'image', type: 'image', sample: '[img url]' },
+                {
+                  name: 'category',
+                  type: 'reference',
+                  referencedCollection: 'cms-rir-categories',
+                  sample: '[Category ref]',
+                  description: 'Reference to parent category',
+                },
+                { name: 'tags', type: 'array', sample: '["Vegetarian","GF"]', itemFields: [
+                  { name: 'label', type: 'string', sample: '"Vegetarian"' },
+                ]},
                 ...CMS_ITEM_SYSTEM_FIELDS,
               ],
             },
@@ -33695,6 +33876,39 @@
             { k: 'Visible', t: 'boolean' },
           ],
         },
+
+        // ── Repeater in Repeater page ─────────────────────────────────────
+
+        'page-rir': {
+          name: 'Page · Repeater in Repeater',
+          type: 'Page',
+          isPage: true,
+          page: 'repeater-in-repeater',
+          props: [
+            { k: 'onClick', t: 'function' },
+            { k: 'onDblClick', t: 'function' },
+            { k: 'onMouseIn', t: 'function' },
+            { k: 'onMouseOut', t: 'function' },
+            { k: 'onViewportEnter', t: 'function' },
+            { k: 'onViewportLeave', t: 'function' },
+          ],
+        },
+        'sec-rir': {
+          name: 'Section · M1',
+          type: 'Section',
+          isContainer: true,
+          page: 'repeater-in-repeater',
+          parentPage: 'page-rir',
+          props: [],
+        },
+        'sec-rir-m2': {
+          name: 'Section · M2',
+          type: 'Section',
+          isContainer: true,
+          page: 'repeater-in-repeater',
+          parentPage: 'page-rir',
+          props: [],
+        },
       };
 
       const S = {
@@ -33860,6 +34074,9 @@
           'sec-ref-ai-info': [],
           'sec-ref-ai-books': [],
           'sec-d2704-countdown': ['countdown'],
+          'page-rir': [],
+          'sec-rir': [],
+          'sec-rir-m2': [],
         },
         primaryCtx: {
           'page-rel-detail': ['stores-current-item'],
@@ -35414,7 +35631,7 @@
         specPageOpen: false,
         specPageId: null,
         preSpecPage: null,
-        currentPage: 'Home Page',
+        currentPage: 'Repeater in Repeater',
         currentItemIdx: 0,
         sortRules: {
           'cms-articles': [
@@ -36523,6 +36740,7 @@
           'Dropdown Component': 'page-dropdown',
           'Items Config': 'page-items-config',
           Services: 'page-services',
+          'Repeater in Repeater': 'page-rir',
         };
         return map[S.currentPage] || 'page-home';
       }
@@ -42960,7 +43178,9 @@
                                   ? '⚡'
                                   : name === 'Services'
                                     ? '🧘'
-                                    : '📄';
+                                    : name === 'Repeater in Repeater'
+                                      ? '↻'
+                                      : '📄';
         document.querySelector('.page-sel').innerHTML =
           `<span class="page-sel-name">${pageIcon} ${name}</span> <span class="page-sel-chevron">▾</span>`;
         document.getElementById('pages-panel').classList.remove('open');
@@ -42986,6 +43206,7 @@
         const ddPage = document.getElementById('dropdown-page');
         const icPage = document.getElementById('items-config-page');
         const svcPage = document.getElementById('services-page');
+        const rirPage = document.getElementById('rir-page');
         S.currentPage = name;
         _addedSuggestedIds.clear();
 
@@ -43008,6 +43229,7 @@
         ddPage.classList.remove('active-page');
         icPage.classList.remove('active-page');
         svcPage.classList.remove('active-page');
+        rirPage.classList.remove('active-page');
 
         if (name === 'Items (List)') {
           itemsPage.classList.add('active-page');
@@ -43041,6 +43263,8 @@
           icPage.classList.add('active-page');
         } else if (name === 'Services') {
           svcPage.classList.add('active-page');
+        } else if (name === 'Repeater in Repeater') {
+          rirPage.classList.add('active-page');
         } else if (name === 'Demo') {
           demoPage.classList.remove('hidden-page');
         } else if (name === 'Demo27.04') {
@@ -43743,6 +43967,7 @@
       let _customDrag = null;
       let _customDragTargetSection = null;
       let _customDragTargetRepItem = null;
+      let _rirDropTarget = null;
 
       function startCustomDrag(e, type) {
         if (e.button !== 0) return;
@@ -43776,6 +44001,14 @@
           if (dragging && ghost) {
             ghost.style.left = ev.clientX + 12 + 'px';
             ghost.style.top = ev.clientY + 'px';
+            // Auto-scroll canvas when ghost is near top or bottom edge
+            const _canvas = document.getElementById('canvas');
+            if (_canvas) {
+              const _cr = _canvas.getBoundingClientRect();
+              const _zone = 80;
+              if (ev.clientY > _cr.bottom - _zone) _canvas.scrollTop += 8;
+              else if (ev.clientY < _cr.top + _zone) _canvas.scrollTop -= 8;
+            }
             if (type === 'section') {
               showDropIndicator(ev.clientY);
             } else if (type === 'text' || type === 'image') {
@@ -43783,7 +44016,12 @@
                 showSectionDropTarget(ev.clientX, ev.clientY);
               }
             } else if (type.startsWith('repeater-')) {
-              showSectionDropTarget(ev.clientX, ev.clientY);
+              if (!showRirDropTarget(ev.clientX, ev.clientY)) {
+                clearRirDropTargets();
+                showSectionDropTarget(ev.clientX, ev.clientY);
+              } else {
+                clearSectionDropTargets();
+              }
             }
           }
         }
@@ -43797,6 +44035,8 @@
           }
           document.querySelectorAll('.canvas-drop-indicator').forEach((el) => el.remove());
           clearSectionDropTargets();
+          const _savedRirTarget = _rirDropTarget;
+          clearRirDropTargets();
 
           if (dragging) {
             _customDrag = null;
@@ -43829,6 +44069,9 @@
                 }
               }
               addBasicElement('section', insertAfter);
+            } else if (type.startsWith('repeater-') && _savedRirTarget) {
+              _customDragTargetSection = null;
+              addNestedRepeaterToRirTarget(_savedRirTarget);
             } else if (type.startsWith('repeater-')) {
               const preset = type.replace('repeater-', '');
               const targetSec = _customDragTargetSection;
@@ -43848,6 +44091,7 @@
           _customDrag = null;
           _customDragTargetSection = null;
           _customDragTargetRepItem = null;
+          _rirDropTarget = null;
         }
 
         document.addEventListener('mousemove', onMove);
@@ -43932,6 +44176,160 @@
         document
           .querySelectorAll('.rep-item-drop-target')
           .forEach((s) => s.classList.remove('rep-item-drop-target'));
+      }
+
+      function showRirDropTarget(x, y) {
+        document.querySelectorAll('.rir-drop-zone').forEach((z) => {
+          z.classList.remove('rir-drop-active', 'rir-drop-blocked');
+        });
+        document.querySelectorAll('.rep-item.rir-drop-active, .rep-item.rir-drop-blocked').forEach((el) => {
+          el.classList.remove('rir-drop-active', 'rir-drop-blocked');
+        });
+        _rirDropTarget = null;
+        if (S.currentPage !== 'Repeater in Repeater') return false;
+        const repItems = [...document.querySelectorAll('#rir-page .rep-item')];
+        // Check innermost first by reversing (deeper items come later in DOM order)
+        for (let i = repItems.length - 1; i >= 0; i--) {
+          const item = repItems[i];
+          const r = item.getBoundingClientRect();
+          if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+            // Custom RiR flow: drop info stored in EL_DEFS
+            if (EL_DEFS[item.id]?._rir_drop) {
+              item.classList.add('rir-drop-active');
+              _rirDropTarget = { blocked: false, el: item };
+              return true;
+            }
+            // Generic nested repeater flow: .rir-drop-zone child inside the item
+            const zone = item.querySelector('.rir-drop-zone');
+            if (zone) {
+              const depth = parseInt(zone.dataset.depth || '1');
+              if (depth >= 3) {
+                zone.classList.add('rir-drop-blocked');
+                _rirDropTarget = { blocked: true, el: zone };
+              } else {
+                zone.classList.add('rir-drop-active');
+                _rirDropTarget = { blocked: false, el: zone };
+              }
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+
+      function clearRirDropTargets() {
+        document.querySelectorAll('.rir-drop-zone').forEach((z) => {
+          z.classList.remove('rir-drop-active', 'rir-drop-blocked');
+        });
+        document.querySelectorAll('.rep-item.rir-drop-active, .rep-item.rir-drop-blocked').forEach((el) => {
+          el.classList.remove('rir-drop-active', 'rir-drop-blocked');
+        });
+        _rirDropTarget = null;
+      }
+
+      function addNestedRepeaterToRirTarget(dropInfo) {
+        if (!dropInfo) return;
+        if (dropInfo.blocked) {
+          toast('Maximum nesting depth reached (3 levels)');
+          return;
+        }
+        const zone = dropInfo.el;
+        const rirDrop = EL_DEFS[zone.id]?._rir_drop;
+        const level = rirDrop?.level || zone.dataset.level;
+        // M2 section: open context picker instead of auto-connecting
+        if (level === 'dishes' && zone.closest('#sec-rir-m2')) { _openRirM2ContextPicker(zone); return; }
+        if (level === 'dishes')    { _addRirDishesLevel(zone);    return; }
+        if (level === 'allergens') { _addRirAllergensLevel(zone); return; }
+        const parentRepId = zone.dataset.parentRep;
+        const itemId = zone.dataset.itemId;
+        const depth = parseInt(zone.dataset.depth || '1');
+        const repItemEl = document.getElementById(itemId);
+        if (!repItemEl) return;
+
+        const ts = Date.now();
+        const newRepId = 'repeater-rir-nested-' + ts;
+        const newItemIds = [1, 2, 3].map((i) => 'rep-rir-n-' + ts + '-' + i);
+        const childDepth = depth + 1;
+        const childBlocked = childDepth >= 3;
+
+        const itemHTML = (idx) => `
+          <div class="rep-item" id="${newItemIds[idx]}" onclick="selEl(event,'${newItemIds[idx]}')" style="padding:10px;border-radius:6px;position:relative">
+            <div class="c-el-overlay" style="border-radius:6px"></div>
+            <div class="c-el" onclick="event.stopPropagation()" style="font-size:11px;color:var(--t3);margin-bottom:6px">Item ${idx + 1}</div>
+            <div class="rir-drop-zone" data-depth="${childDepth}" data-parent-rep="${newRepId}" data-item-id="${newItemIds[idx]}"${childBlocked ? ' data-blocked="true"' : ''}>
+              ${childBlocked ? '⛔ Max depth reached (3 levels)' : '↻ Drop Repeater here to nest further'}
+            </div>
+          </div>`;
+
+        const repEl = document.createElement('div');
+        repEl.className = 'c-repeater';
+        repEl.id = newRepId;
+        repEl.setAttribute('onclick', `selEl(event,'${newRepId}')`);
+        repEl.style.cssText = 'margin-top:8px;border-radius:6px';
+        repEl.innerHTML = `
+          <div class="ctx-pill rep-pill" id="pill-${newRepId}"></div>
+          <div class="c-el-overlay"></div>
+          <div class="rep-header" onclick="selElSettings(event,'${newRepId}')">
+            <span class="rep-icon"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6l-1.2 1.2a2.5 2.5 0 0 1-3.6-3.4L6.4 2.6a2.5 2.5 0 0 1 3.5 0l.1.1"/><path d="M6 10l1.2-1.2a2.5 2.5 0 0 1 3.6 3.4l-1.2 1.2a2.5 2.5 0 0 1-3.5 0l-.1-.1"/></svg></span>
+            <span class="rep-label">Repeater</span>
+            <span class="rep-count" id="rep-count-rir-nested-${ts}">— not connected</span>
+            <div class="rep-bind-btn" id="rbtn-${newRepId}" onclick="openDd(event,'${newRepId}','Items')" title="Connect to list">
+              <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" width="12" height="12"><circle cx="4.5" cy="3.5" r="2"/><circle cx="11.5" cy="12.5" r="2"/><path d="M4.5 5.5C4.5 9 11.5 7 11.5 10.5"/></svg>
+            </div>
+          </div>
+          <div class="rep-notice">Not connected — click ↗ to bind to a field. <span style="text-decoration:underline;cursor:pointer;font-weight:600" onclick="repNoticeAction(event,'${newRepId}')">Connect data →</span></div>
+          <div style="display:flex;flex-direction:column;gap:6px;padding:8px">
+            ${itemHTML(0)}${itemHTML(1)}${itemHTML(2)}
+          </div>`;
+
+        zone.replaceWith(repEl);
+
+        const sectionId = EL_DEFS[parentRepId]?.section || 'sec-rir';
+        EL_DEFS[newRepId] = {
+          name: 'Repeater (L' + (depth + 1) + ')',
+          type: 'Repeater',
+          section: sectionId,
+          isRepeater: true,
+          contextModel: 'on-repeater',
+          props: [...REP_PROPS],
+        };
+        newItemIds.forEach((id, i) => {
+          EL_DEFS[id] = { name: 'Item ' + (i + 1), type: 'RepItem', section: sectionId, isRepItem: true, props: [] };
+        });
+        S.ctxMap[newRepId] = S.ctxMap[parentRepId] ? [...S.ctxMap[parentRepId]] : [];
+
+        refreshAllPills();
+        refreshRepeaterSkeletons();
+
+        // Auto-open the binding picker for the new repeater
+        const parentBinding = S.bindings[parentRepId + '|Items'];
+        const preSrc = parentBinding ? parentBinding.ctxId : null;
+        S.dd = {
+          open: true,
+          elId: newRepId,
+          propKey: 'Items',
+          paramName: null,
+          step: 'source',
+          srcId: preSrc,
+          fieldName: null,
+          openPanel: preSrc ? 'field' : 'src',
+          _preferBelow: true,
+        };
+        const dd = document.getElementById('dd');
+        const panelLeft = window.innerWidth - parseInt(getComputedStyle(document.documentElement).getPropertyValue('--panel'));
+        dd.style.left = Math.max(8, panelLeft - 290 - 12) + 'px';
+        const headerEl = repEl.querySelector('.rep-header');
+        if (headerEl) {
+          const rect = headerEl.getBoundingClientRect();
+          S.dd._anchorY = rect.bottom;
+          S.dd._anchorTop = rect.top;
+          dd.style.top = (rect.bottom + 5) + 'px';
+        }
+        dd.classList.add('open');
+        document.getElementById('dd-title').textContent = 'Connect · Items';
+        renderDd();
+        S.sel = newRepId;
+        renderRP();
       }
 
       function getActiveCanvasInner() {
@@ -45202,6 +45600,479 @@
         renderBody();
 
         toast('Restaurant Menu repeater added & connected', true);
+      }
+
+      // ── RiR: Categories-only starting state (Dishes + Allergens added by drag) ──
+      function addRirCategoriesRepeater(sBody, sectionId, repId, ts, ctxOverride) {
+        const isRelational = ctxOverride === 'cms-rir-categories';
+        const ctxId = isRelational ? 'cms-rir-categories' : 'cms-restaurant-menu';
+        const menuData = REP_SAMPLE_DATA[ctxId] || [];
+        const catColors = ['#f59e0b', '#3b82f6', '#ec4899'];
+
+        if (!S.ctxMap[repId]) S.ctxMap[repId] = [];
+        if (!S.ctxMap[repId].includes(ctxId)) S.ctxMap[repId].push(ctxId);
+
+        const catId   = (c) => `rir-cat${c}-${ts}`;
+        const catCiId = (c) => `rir-ci${c}-${ts}`;
+        const catCnId = (c) => `rir-cn${c}-${ts}`;
+        const catCdId = (c) => `rir-cd${c}-${ts}`;
+
+        const _linkSvg  = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6l-1.2 1.2a2.5 2.5 0 0 1-3.6-3.4L6.4 2.6a2.5 2.5 0 0 1 3.5 0l.1.1"/><path d="M6 10l1.2-1.2a2.5 2.5 0 0 1 3.6 3.4l-1.2 1.2a2.5 2.5 0 0 1-3.5 0l-.1-.1"/></svg>`;
+        const _chainSvg = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" width="12" height="12"><circle cx="4.5" cy="3.5" r="2"/><circle cx="11.5" cy="12.5" r="2"/><path d="M4.5 5.5C4.5 9 11.5 7 11.5 10.5"/></svg>`;
+
+        // For relational ctx (M2), show name + description; for flat ctx (M1), show icon + categoryName + description
+        const catLabel    = isRelational ? (cat) => cat.name        : (cat) => cat.categoryName;
+        const nameField   = isRelational ? 'name'        : 'categoryName';
+        const iconField   = isRelational ? null           : 'categoryIcon';
+        const itemsSample = isRelational ? '[{name, description, dishes, …}]' : '[{categoryName, dishes, …}]';
+        const repLabel    = isRelational ? 'Menu Categories' : 'Menu Categories';
+        const repCount    = isRelational
+          ? `🍽 Categories · ${menuData.length} categories`
+          : `🍽 Restaurant Menu · ${menuData.length} categories`;
+
+        const catItemHTML = (c, cat, color) => `
+    <div class="rep-item" id="${catId(c)}" onclick="selEl(event,'${catId(c)}')" style="padding:14px 16px;border-radius:8px;background:var(--sur2);border:1px solid var(--b1);border-left:3px solid ${color};cursor:pointer;position:relative">
+      <div class="c-el-overlay"></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        ${iconField ? `
+        <div class="c-el bound" id="${catCiId(c)}" onclick="selEl(event,'${catCiId(c)}')" style="cursor:pointer;width:32px;height:32px;border-radius:8px;background:var(--sur);border:1px solid var(--b1);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">
+          <div class="c-el-overlay" style="border-radius:8px"></div>
+          <div class="el-tags"><div class="el-type-tag">Text</div><div class="el-bind-tag"></div></div>
+          ${cat.categoryIcon}
+        </div>` : ''}
+        <div style="flex:1;min-width:0">
+          <div class="c-el bound" id="${catCnId(c)}" onclick="selEl(event,'${catCnId(c)}')" style="cursor:pointer">
+            <div class="c-el-overlay" style="border-radius:4px"></div>
+            <div class="el-tags"><div class="el-type-tag">Text</div><div class="el-bind-tag"></div></div>
+            <div style="font-weight:700;font-size:14px;color:var(--t1);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif">${catLabel(cat)}</div>
+          </div>
+          <div class="c-el bound" id="${catCdId(c)}" onclick="selEl(event,'${catCdId(c)}')" style="cursor:pointer">
+            <div class="c-el-overlay" style="border-radius:4px"></div>
+            <div class="el-tags"><div class="el-type-tag">Text</div><div class="el-bind-tag"></div></div>
+            <div style="font-size:11px;color:var(--t3)">${cat.description}</div>
+          </div>
+        </div>
+      </div>
+      ${isRelational ? `<div class="rir-m2-drop-cue" onclick="event.stopPropagation();_openRirM2ContextPicker(document.getElementById('${catId(c)}'))" style="margin-top:10px;border:2px dashed var(--b2);border-radius:6px;padding:8px 12px;text-align:center;font-size:11px;color:var(--t3);cursor:pointer;transition:all .15s;user-select:none" onmouseenter="this.style.borderColor='var(--acc)';this.style.color='var(--acc)';this.style.background='var(--acc-d)'" onmouseleave="this.style.borderColor='';this.style.color='';this.style.background=''">↻ Drop Repeater · or click to add</div>` : ''}
+    </div>`;
+
+        const repEl = document.createElement('div');
+        repEl.className = 'c-repeater bound';
+        repEl.id = repId;
+        repEl.setAttribute('onclick', `selEl(event,'${repId}')`);
+        repEl.setAttribute('data-no-skeleton', 'true');
+        repEl.style.cssText = 'margin:0 24px 24px;border-radius:6px';
+        repEl.innerHTML = `
+    <div class="ctx-pill rep-pill" id="pill-${repId}"></div>
+    <div class="c-el-overlay"></div>
+    <div class="rep-header" onclick="selElSettings(event,'${repId}')">
+      <span class="rep-icon">${_linkSvg}</span>
+      <span class="rep-label">${repLabel}</span>
+      <span class="rep-count" id="rep-count-${repId}">${repCount}</span>
+      <div class="rep-bind-btn" onclick="openDd(event,'${repId}','Items')" title="Connect to list">${_chainSvg}</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:12px;padding:12px">
+      ${menuData.map((cat, ci) => catItemHTML(ci + 1, cat, catColors[ci])).join('')}
+    </div>`;
+        sBody.appendChild(repEl);
+
+        EL_DEFS[repId] = { name: 'Repeater', type: 'Repeater', section: sectionId, isRepeater: true, contextModel: 'on-repeater', data_no_skeleton: true, props: [...REP_PROPS] };
+        menuData.forEach((cat, ci) => {
+          const c = ci + 1;
+          EL_DEFS[catId(c)]   = { name: `Category ${c}`, type: 'RepItem', section: sectionId, isRepItem: true, repTemplate: 'rir-cat-' + ts, props: [],
+            _rir_drop: { level: 'dishes', catIdx: c, parentRepId: repId } };
+          if (iconField) EL_DEFS[catCiId(c)] = { name: 'Category Icon', type: 'Text', section: sectionId, repTemplate: 'rir-ci-' + ts, props: [{ k: 'Value', t: 'string' }, { k: 'Visible', t: 'boolean' }] };
+          EL_DEFS[catCnId(c)] = { name: 'Category Name', type: 'Text', section: sectionId, repTemplate: 'rir-cn-' + ts, props: [{ k: 'Value', t: 'string' }, { k: 'Visible', t: 'boolean' }] };
+          EL_DEFS[catCdId(c)] = { name: 'Description',   type: 'Text', section: sectionId, repTemplate: 'rir-cd-' + ts, props: [{ k: 'Value', t: 'string' }, { k: 'Visible', t: 'boolean' }] };
+        });
+
+        S.bindings[repId + '|Items'] = { ctxId, fieldName: 'items', sample: itemsSample };
+        menuData.forEach((cat, ci) => {
+          const c = ci + 1;
+          if (iconField) S.bindings[catCiId(c) + '|Value'] = { ctxId, fieldName: iconField, sample: `"${cat.categoryIcon}"` };
+          S.bindings[catCnId(c) + '|Value'] = { ctxId, fieldName: nameField,  sample: `"${catLabel(cat)}"` };
+          S.bindings[catCdId(c) + '|Value'] = { ctxId, fieldName: 'description', sample: `"${cat.description}"` };
+        });
+
+        refreshAllPills();
+        refreshElementBindTags();
+        refreshRepeaterSkeletons();
+        renderBody();
+      }
+
+      // ── RiR drop handler: replace drop zone with Dishes repeater ──────────
+      function _addRirDishesLevel(zone) {
+        const ctxId    = 'cms-restaurant-menu';
+        const menuData = REP_SAMPLE_DATA[ctxId] || [];
+        const rirDrop  = EL_DEFS[zone.id]?._rir_drop;
+        const parentRepId   = rirDrop?.parentRepId   || zone.dataset.parentRep;
+        const droppedCatIdx = rirDrop?.catIdx ?? parseInt(zone.dataset.catIdx || '1');
+        const sectionId     = EL_DEFS[parentRepId]?.section || 'sec-rir';
+        const ts            = Date.now();
+
+        const _linkSvg  = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6l-1.2 1.2a2.5 2.5 0 0 1-3.6-3.4L6.4 2.6a2.5 2.5 0 0 1 3.5 0l.1.1"/><path d="M6 10l1.2-1.2a2.5 2.5 0 0 1 3.6 3.4l-1.2 1.2a2.5 2.5 0 0 1-3.5 0l-.1-.1"/></svg>`;
+        const _chainSvg = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" width="12" height="12"><circle cx="4.5" cy="3.5" r="2"/><circle cx="11.5" cy="12.5" r="2"/><path d="M4.5 5.5C4.5 9 11.5 7 11.5 10.5"/></svg>`;
+
+        // Apply to all sibling items in this repeater (same template = all items)
+        const allZones = Object.keys(EL_DEFS)
+          .filter(id => EL_DEFS[id]?._rir_drop?.level === 'dishes' && EL_DEFS[id]._rir_drop.parentRepId === parentRepId)
+          .map(id => document.getElementById(id)).filter(Boolean);
+
+        allZones.forEach(z => {
+          const catIdx = EL_DEFS[z.id]?._rir_drop?.catIdx ?? parseInt(z.dataset.catIdx || '1');
+          const cat    = menuData[catIdx - 1];
+          if (!cat) return;
+          const dishes = cat.dishes || [];
+
+          const drRepId = `rir-dr${catIdx}-${ts}`;
+          const diId    = (d) => `rir-di${catIdx}${d}-${ts}`;
+          const dnId    = (d) => `rir-dn${catIdx}${d}-${ts}`;
+          const dpId    = (d) => `rir-dp${catIdx}${d}-${ts}`;
+          const ddId    = (d) => `rir-dd${catIdx}${d}-${ts}`;
+
+          const dishItemHTML = (d, dish) => `
+    <div class="rep-item" id="${diId(d)}" onclick="selEl(event,'${diId(d)}')" style="flex:1;min-width:140px;padding:12px;border-radius:6px;border:1px solid var(--b1);cursor:pointer;position:relative;display:flex;flex-direction:column;gap:4px;background:var(--sur)">
+      <div class="c-el-overlay"></div>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:6px">
+        <div class="c-el bound" id="${dnId(d)}" onclick="selEl(event,'${dnId(d)}')" style="cursor:pointer;flex:1;min-width:0">
+          <div class="c-el-overlay" style="border-radius:4px"></div>
+          <div class="el-tags"><div class="el-type-tag">Text</div><div class="el-bind-tag"></div></div>
+          <div style="font-weight:600;font-size:12px;color:var(--t1)">${dish.name}</div>
+        </div>
+        <div class="c-el bound" id="${dpId(d)}" onclick="selEl(event,'${dpId(d)}')" style="cursor:pointer;flex-shrink:0">
+          <div class="c-el-overlay" style="border-radius:4px"></div>
+          <div class="el-tags"><div class="el-type-tag">Text</div><div class="el-bind-tag"></div></div>
+          <div style="font-size:11px;color:#059669;font-weight:700">${dish.price}</div>
+        </div>
+      </div>
+      <div class="c-el bound" id="${ddId(d)}" onclick="selEl(event,'${ddId(d)}')" style="cursor:pointer">
+        <div class="c-el-overlay" style="border-radius:4px"></div>
+        <div class="el-tags"><div class="el-type-tag">Text</div><div class="el-bind-tag"></div></div>
+        <div style="font-size:10px;color:var(--t3);line-height:1.4">${dish.description}</div>
+      </div>
+    </div>`;
+
+          const repEl = document.createElement('div');
+          repEl.className = 'c-repeater bound';
+          repEl.id = drRepId;
+          repEl.setAttribute('onclick', `selEl(event,'${drRepId}')`);
+          repEl.style.cssText = 'border-radius:6px;margin-top:8px';
+          repEl.innerHTML = `
+    <div class="ctx-pill rep-pill" id="pill-${drRepId}"></div>
+    <div class="c-el-overlay"></div>
+    <div class="rep-header" onclick="selElSettings(event,'${drRepId}')">
+      <span class="rep-icon">${_linkSvg}</span>
+      <span class="rep-label">Dishes</span>
+      <span class="rep-count" id="rep-count-${drRepId}">${dishes.length} dishes · <em style="font-style:normal;opacity:.7">dishes[ ]</em></span>
+      <div class="rep-bind-btn" onclick="openDd(event,'${drRepId}','Items')" title="Connect to list">${_chainSvg}</div>
+    </div>
+    <div style="display:flex;gap:8px;padding:8px;flex-wrap:wrap">
+      ${dishes.map((dish, di) => dishItemHTML(di + 1, dish)).join('')}
+    </div>`;
+          z.appendChild(repEl);
+          if (EL_DEFS[z.id]) delete EL_DEFS[z.id]._rir_drop;
+
+          EL_DEFS[drRepId] = { name: 'Dishes', type: 'Repeater', section: sectionId, isRepeater: true, contextModel: 'on-repeater', props: [...REP_PROPS] };
+          S.ctxMap[drRepId] = S.ctxMap[parentRepId] ? [...S.ctxMap[parentRepId]] : [];
+          dishes.forEach((dish, di) => {
+            const d = di + 1;
+            EL_DEFS[diId(d)] = { name: `Dish ${d}`, type: 'RepItem', section: sectionId, isRepItem: true, repTemplate: 'rir-di-' + ts, props: [],
+              _rir_drop: { level: 'allergens', catIdx, dishIdx: d, parentRepId: drRepId } };
+            EL_DEFS[dnId(d)] = { name: 'Dish Name',   type: 'Text', section: sectionId, repTemplate: 'rir-dn-' + ts, props: [{ k: 'Value', t: 'string' }, { k: 'Visible', t: 'boolean' }] };
+            EL_DEFS[dpId(d)] = { name: 'Price',        type: 'Text', section: sectionId, repTemplate: 'rir-dp-' + ts, props: [{ k: 'Value', t: 'string' }, { k: 'Visible', t: 'boolean' }] };
+            EL_DEFS[ddId(d)] = { name: 'Description',  type: 'Text', section: sectionId, repTemplate: 'rir-dd-' + ts, props: [{ k: 'Value', t: 'string' }, { k: 'Visible', t: 'boolean' }] };
+          });
+
+          S.bindings[drRepId + '|Items'] = { ctxId, fieldName: 'dishes', sample: '[{name, price, description, allergens}]' };
+          dishes.forEach((dish, di) => {
+            const d = di + 1;
+            S.bindings[dnId(d) + '|Value'] = { ctxId, fieldName: 'name',        sample: `"${dish.name}"` };
+            S.bindings[dpId(d) + '|Value'] = { ctxId, fieldName: 'price',       sample: `"${dish.price}"` };
+            S.bindings[ddId(d) + '|Value'] = { ctxId, fieldName: 'description', sample: `"${dish.description}"` };
+          });
+        });
+
+        refreshAllPills();
+        refreshElementBindTags();
+        refreshRepeaterSkeletons();
+        const droppedCat = menuData[droppedCatIdx - 1];
+        toast('Dishes connected · sub-array of ' + (droppedCat?.categoryName || 'category'), true);
+      }
+
+      // ── RiR M2: drop opens the standard Connect panel ────────────────────────────
+      function _openRirM2ContextPicker(zone) {
+        const ts      = Date.now();
+        const rirDrop = EL_DEFS[zone.id]?._rir_drop;
+        const parentRepId = rirDrop?.parentRepId || zone.dataset.parentRep;
+        const catIdx      = rirDrop?.catIdx      ?? zone.dataset.catIdx;
+        const sectionId   = EL_DEFS[parentRepId]?.section || 'sec-rir-m2';
+        const plId        = 'rir-m2-ph-' + ts;
+
+        const _linkSvg = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6l-1.2 1.2a2.5 2.5 0 0 1-3.6-3.4L6.4 2.6a2.5 2.5 0 0 1 3.5 0l.1.1"/><path d="M6 10l1.2-1.2a2.5 2.5 0 0 1 3.6 3.4l-1.2 1.2a2.5 2.5 0 0 1-3.5 0l-.1-.1"/></svg>`;
+        const _chainSvg = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" width="12" height="12"><circle cx="4.5" cy="3.5" r="2"/><circle cx="11.5" cy="12.5" r="2"/><path d="M4.5 5.5C4.5 9 11.5 7 11.5 10.5"/></svg>`;
+
+        const placeholder = document.createElement('div');
+        placeholder.className = 'c-repeater';
+        placeholder.id = plId;
+        placeholder.setAttribute('onclick', `selEl(event,'${plId}')`);
+        placeholder.style.cssText = 'border-radius:6px;margin-top:8px';
+        placeholder.innerHTML = `
+    <div class="c-el-overlay"></div>
+    <div class="rep-header" onclick="openDd(event,'${plId}','Items')">
+      <span class="rep-icon" style="opacity:.4">${_linkSvg}</span>
+      <span class="rep-label" style="opacity:.4">Repeater</span>
+      <span class="rep-count" style="opacity:.4;font-style:italic">not connected</span>
+      <div class="rep-bind-btn" onclick="openDd(event,'${plId}','Items')" title="Connect to list">${_chainSvg}</div>
+    </div>`;
+        if (EL_DEFS[zone.id]) delete EL_DEFS[zone.id]._rir_drop;
+        zone.querySelector('.rir-m2-drop-cue')?.remove();
+        zone.appendChild(placeholder);
+
+        // Derive parent context from the outer repeater's actual Items binding so
+        // the "Related — has parent reference" section in the source panel is always
+        // driven by what the parent repeater is actually connected to.
+        const parentCtxId = S.bindings[parentRepId + '|Items']?.ctxId || 'cms-rir-categories';
+
+        EL_DEFS[plId] = {
+          name: 'Repeater', type: 'Repeater', section: sectionId,
+          isRepeater: true, contextModel: 'on-repeater', props: [...REP_PROPS],
+          _rir_m2: true, _rir_m2_parentRepId: parentRepId, _rir_m2_catIdx: catIdx,
+          _rir_m2_parentCtxId: parentCtxId,
+        };
+        S.ctxMap[plId] = [];
+
+        // Open Connect panel anchored to the drop zone.
+        // The .rep-header is display:none so getBoundingClientRect() returns zeros;
+        // using zone's rect gives correct panel placement.
+        const zoneRect  = zone.getBoundingClientRect();
+        const dd        = document.getElementById('dd');
+        const panelLeft = window.innerWidth - parseInt(getComputedStyle(document.documentElement).getPropertyValue('--panel'));
+        S.dd = {
+          open: true, elId: plId, propKey: 'Items', paramName: null, step: 'source',
+          srcId: null, fieldName: null, openPanel: 'src',
+          _preferBelow: true, _anchorY: zoneRect.bottom, _anchorTop: zoneRect.top,
+        };
+        dd.style.left = Math.max(8, panelLeft - 290 - 12) + 'px';
+        dd.classList.add('open');
+        document.getElementById('dd-title').textContent = 'Connect · Items';
+        renderDd();
+        repositionDd();
+      }
+
+      // ── Called after user confirms in the standard panel for an M2 placeholder ──
+      function _addRirDishesLevelM2FromPanel(placeholderId) {
+        const def         = EL_DEFS[placeholderId];
+        if (!def?._rir_m2) return;
+        const parentRepId = def._rir_m2_parentRepId;
+        const plCatIdx    = def._rir_m2_catIdx;
+
+        // Process remaining sibling items + replace the placeholder element
+        const remainingZones = Object.keys(EL_DEFS)
+          .filter(id => EL_DEFS[id]?._rir_drop?.level === 'dishes' && EL_DEFS[id]._rir_drop.parentRepId === parentRepId)
+          .map(id => document.getElementById(id)).filter(Boolean);
+
+        // Build a zone-like object for the placeholder so _addRirDishesLevelM2Internal can loop it
+        const phEl = document.getElementById(placeholderId);
+        const phZoneLike = { dataset: { catIdx: plCatIdx, parentRep: parentRepId }, replaceWith: (el) => phEl?.replaceWith(el) };
+
+        const allTargets = [phZoneLike, ...remainingZones];
+
+        // Use shared loop logic from _addRirDishesLevelM2
+        _addRirDishesLevelM2Internal(parentRepId, allTargets);
+        delete EL_DEFS[placeholderId];
+      }
+
+      // ── Shared rendering core for M2 Dishes repeater ─────────────────────────────
+      function _addRirDishesLevelM2Internal(parentRepId, targets) {
+        const menuData  = REP_SAMPLE_DATA['cms-restaurant-menu'] || [];
+        const sectionId = EL_DEFS[parentRepId]?.section || 'sec-rir-m2';
+        const ts        = Date.now();
+
+        const _linkSvg   = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6l-1.2 1.2a2.5 2.5 0 0 1-3.6-3.4L6.4 2.6a2.5 2.5 0 0 1 3.5 0l.1.1"/><path d="M6 10l1.2-1.2a2.5 2.5 0 0 1 3.6 3.4l-1.2 1.2a2.5 2.5 0 0 1-3.5 0l-.1-.1"/></svg>`;
+        const _chainSvg  = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" width="12" height="12"><circle cx="4.5" cy="3.5" r="2"/><circle cx="11.5" cy="12.5" r="2"/><path d="M4.5 5.5C4.5 9 11.5 7 11.5 10.5"/></svg>`;
+        const _filterSvg = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" width="10" height="10"><path d="M2 4h12"/><path d="M4 8h8"/><path d="M6 12h4"/></svg>`;
+        const filterChip = `<span style="display:inline-flex;align-items:center;gap:3px;font-size:9px;background:#0ea5e912;color:#0369a1;border:1px solid #0369a130;border-radius:10px;padding:1px 7px;font-weight:600">${_filterSvg} category = [parent]</span>`;
+
+        targets.forEach(z => {
+          const catIdx = z.id ? (EL_DEFS[z.id]?._rir_drop?.catIdx ?? parseInt(z.dataset?.catIdx || '1')) : parseInt(z.dataset?.catIdx || '1');
+          const cat    = menuData[catIdx - 1];
+          if (!cat) return;
+          const dishes = cat.dishes || [];
+
+          const drRepId = `rir-m2-dr${catIdx}-${ts}`;
+          const diId    = (d) => `rir-m2-di${catIdx}${d}-${ts}`;
+          const dnId    = (d) => `rir-m2-dn${catIdx}${d}-${ts}`;
+          const dpId    = (d) => `rir-m2-dp${catIdx}${d}-${ts}`;
+          const ddId    = (d) => `rir-m2-dd${catIdx}${d}-${ts}`;
+
+          const dishItemHTML = (d, dish) => `
+    <div class="rep-item" id="${diId(d)}" onclick="selEl(event,'${diId(d)}')" style="flex:1;min-width:140px;padding:12px;border-radius:6px;border:1px solid var(--b1);cursor:pointer;position:relative;display:flex;flex-direction:column;gap:4px;background:var(--sur)">
+      <div class="c-el-overlay"></div>
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:6px">
+        <div class="c-el bound" id="${dnId(d)}" onclick="selEl(event,'${dnId(d)}')" style="cursor:pointer;flex:1;min-width:0">
+          <div class="c-el-overlay" style="border-radius:4px"></div>
+          <div class="el-tags"><div class="el-type-tag">Text</div><div class="el-bind-tag"></div></div>
+          <div style="font-weight:600;font-size:12px;color:var(--t1)">${dish.name}</div>
+        </div>
+        <div class="c-el bound" id="${dpId(d)}" onclick="selEl(event,'${dpId(d)}')" style="cursor:pointer;flex-shrink:0">
+          <div class="c-el-overlay" style="border-radius:4px"></div>
+          <div class="el-tags"><div class="el-type-tag">Text</div><div class="el-bind-tag"></div></div>
+          <div style="font-size:11px;color:#059669;font-weight:700">${dish.price}</div>
+        </div>
+      </div>
+      <div class="c-el bound" id="${ddId(d)}" onclick="selEl(event,'${ddId(d)}')" style="cursor:pointer">
+        <div class="c-el-overlay" style="border-radius:4px"></div>
+        <div class="el-tags"><div class="el-type-tag">Text</div><div class="el-bind-tag"></div></div>
+        <div style="font-size:10px;color:var(--t3);line-height:1.4">${dish.description}</div>
+      </div>
+    </div>`;
+
+          const repEl = document.createElement('div');
+          repEl.className = 'c-repeater bound';
+          repEl.id = drRepId;
+          repEl.setAttribute('onclick', `selEl(event,'${drRepId}')`);
+          repEl.style.cssText = 'border-radius:6px;margin-top:8px';
+          repEl.innerHTML = `
+    <div class="ctx-pill rep-pill" id="pill-${drRepId}"></div>
+    <div class="c-el-overlay"></div>
+    <div class="rep-header" onclick="selElSettings(event,'${drRepId}')">
+      <span class="rep-icon">${_linkSvg}</span>
+      <span class="rep-label">Dishes</span>
+      <span class="rep-count" id="rep-count-${drRepId}">${dishes.length} dishes · ${filterChip}</span>
+      <div class="rep-bind-btn" onclick="openDd(event,'${drRepId}','Items')" title="Connect to list">${_chainSvg}</div>
+    </div>
+    <div style="display:flex;gap:8px;padding:8px;flex-wrap:wrap">
+      ${dishes.map((dish, di) => dishItemHTML(di + 1, dish)).join('')}
+    </div>`;
+          if (z.nodeType) {
+            if (EL_DEFS[z.id]) delete EL_DEFS[z.id]._rir_drop;
+            z.appendChild(repEl);
+          } else {
+            // Proxy object (phZoneLike): replaceWith swaps the placeholder element
+            z.replaceWith(repEl);
+          }
+
+          EL_DEFS[drRepId] = { name: 'Dishes', type: 'Repeater', section: sectionId, isRepeater: true, contextModel: 'on-repeater', props: [...REP_PROPS] };
+          S.ctxMap[drRepId] = ['cms-rir-dishes'];
+          dishes.forEach((dish, di) => {
+            const d = di + 1;
+            EL_DEFS[diId(d)] = { name: `Dish ${d}`, type: 'RepItem', section: sectionId, isRepItem: true, repTemplate: 'rir-m2-di-' + ts, props: [] };
+            EL_DEFS[dnId(d)] = { name: 'Dish Name',  type: 'Text', section: sectionId, repTemplate: 'rir-m2-dn-' + ts, props: [{ k: 'Value', t: 'string' }, { k: 'Visible', t: 'boolean' }] };
+            EL_DEFS[dpId(d)] = { name: 'Price',       type: 'Text', section: sectionId, repTemplate: 'rir-m2-dp-' + ts, props: [{ k: 'Value', t: 'string' }, { k: 'Visible', t: 'boolean' }] };
+            EL_DEFS[ddId(d)] = { name: 'Description', type: 'Text', section: sectionId, repTemplate: 'rir-m2-dd-' + ts, props: [{ k: 'Value', t: 'string' }, { k: 'Visible', t: 'boolean' }] };
+          });
+
+          S.bindings[drRepId + '|Items'] = { ctxId: 'cms-rir-dishes', fieldName: 'items', filter: { field: 'category', condition: 'equals', value: '{parentContext._id}' }, sample: '[{name, price, description}]' };
+          dishes.forEach((dish, di) => {
+            const d = di + 1;
+            S.bindings[dnId(d) + '|Value'] = { ctxId: 'cms-rir-dishes', fieldName: 'name',        sample: `"${dish.name}"` };
+            S.bindings[dpId(d) + '|Value'] = { ctxId: 'cms-rir-dishes', fieldName: 'price',       sample: `"${dish.price}"` };
+            S.bindings[ddId(d) + '|Value'] = { ctxId: 'cms-rir-dishes', fieldName: 'description', sample: `"${dish.description}"` };
+          });
+        });
+
+        refreshAllPills();
+        refreshElementBindTags();
+        refreshRepeaterSkeletons();
+      }
+
+      // ── RiR M2: replace drop zone with Dishes repeater (separate context + filter) ──
+      function _addRirDishesLevelM2(zone) {
+        const rirDrop     = EL_DEFS[zone.id]?._rir_drop;
+        const parentRepId = rirDrop?.parentRepId || zone.dataset.parentRep;
+        const droppedCatIdx = rirDrop?.catIdx ?? parseInt(zone.dataset.catIdx || '1');
+        const allZones    = Object.keys(EL_DEFS)
+          .filter(id => EL_DEFS[id]?._rir_drop?.level === 'dishes' && EL_DEFS[id]._rir_drop.parentRepId === parentRepId)
+          .map(id => document.getElementById(id)).filter(Boolean);
+        _addRirDishesLevelM2Internal(parentRepId, allZones);
+        const menuData   = REP_SAMPLE_DATA['cms-restaurant-menu'] || [];
+        const droppedCat = menuData[droppedCatIdx - 1];
+        toast('Dishes connected · separate context filtered by ' + (droppedCat?.categoryName || 'category'), true);
+      }
+
+      // ── RiR drop handler: replace drop zone with Allergens repeater ───────
+      function _addRirAllergensLevel(zone) {
+        const ctxId    = 'cms-restaurant-menu';
+        const menuData = REP_SAMPLE_DATA[ctxId] || [];
+        const rirDrop  = EL_DEFS[zone.id]?._rir_drop;
+        const parentRepId    = rirDrop?.parentRepId    || zone.dataset.parentRep;
+        const droppedCatIdx  = rirDrop?.catIdx  ?? parseInt(zone.dataset.catIdx  || '1');
+        const droppedDishIdx = rirDrop?.dishIdx ?? parseInt(zone.dataset.dishIdx || '1');
+        const sectionId      = EL_DEFS[parentRepId]?.section || 'sec-rir';
+        const ts             = Date.now();
+
+        const _linkSvg  = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6l-1.2 1.2a2.5 2.5 0 0 1-3.6-3.4L6.4 2.6a2.5 2.5 0 0 1 3.5 0l.1.1"/><path d="M6 10l1.2-1.2a2.5 2.5 0 0 1 3.6 3.4l-1.2 1.2a2.5 2.5 0 0 1-3.5 0l-.1-.1"/></svg>`;
+        const _chainSvg = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" width="12" height="12"><circle cx="4.5" cy="3.5" r="2"/><circle cx="11.5" cy="12.5" r="2"/><path d="M4.5 5.5C4.5 9 11.5 7 11.5 10.5"/></svg>`;
+
+        // Apply to all sibling dish items in this repeater (same template = all dish items)
+        const allZones = Object.keys(EL_DEFS)
+          .filter(id => EL_DEFS[id]?._rir_drop?.level === 'allergens' && EL_DEFS[id]._rir_drop.parentRepId === parentRepId)
+          .map(id => document.getElementById(id)).filter(Boolean);
+
+        allZones.forEach(z => {
+          const catIdx  = EL_DEFS[z.id]?._rir_drop?.catIdx  ?? parseInt(z.dataset.catIdx  || '1');
+          const dishIdx = EL_DEFS[z.id]?._rir_drop?.dishIdx ?? parseInt(z.dataset.dishIdx || '1');
+          const dish    = menuData[catIdx - 1]?.dishes?.[dishIdx - 1];
+          if (!dish) return;
+          const allergens = dish.allergens || [];
+
+          const arRepId = `rir-ar${catIdx}${dishIdx}-${ts}`;
+          const aiId    = (a) => `rir-ai${catIdx}${dishIdx}${a}-${ts}`;
+          const atId    = (a) => `rir-at${catIdx}${dishIdx}${a}-${ts}`;
+
+          const countLabel = allergens.length === 0 ? '0 allergens' : `${allergens.length} allergen${allergens.length !== 1 ? 's' : ''} · <em style="font-style:normal;opacity:.7">allergens[ ]</em>`;
+          const inner = allergens.length > 0
+            ? allergens.map((al, ai) => {
+                const a = ai + 1;
+                return `<div class="rep-item" id="${aiId(a)}" onclick="selEl(event,'${aiId(a)}')" style="cursor:pointer;position:relative">
+          <div class="c-el-overlay" style="border-radius:20px"></div>
+          <div class="c-el bound" id="${atId(a)}" onclick="selEl(event,'${atId(a)}')" style="cursor:pointer">
+            <div class="c-el-overlay" style="border-radius:4px"></div>
+            <div class="el-tags"><div class="el-type-tag">Text</div><div class="el-bind-tag"></div></div>
+            <div style="display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:2px 8px;background:#fef3c7;color:#92400e;border-radius:20px;font-weight:500;border:1px solid #fde68a">${al.allergenIcon} ${al.allergenName}</div>
+          </div>
+        </div>`;
+              }).join('')
+            : `<div style="font-size:10px;color:var(--t3);padding:3px 8px;font-style:italic">No allergens</div>`;
+
+          const repEl = document.createElement('div');
+          repEl.className = 'c-repeater bound';
+          repEl.id = arRepId;
+          repEl.setAttribute('onclick', `selEl(event,'${arRepId}')`);
+          repEl.style.cssText = 'border-radius:6px;margin-top:6px';
+          repEl.innerHTML = `
+    <div class="ctx-pill rep-pill" id="pill-${arRepId}"></div>
+    <div class="c-el-overlay"></div>
+    <div class="rep-header" onclick="selElSettings(event,'${arRepId}')">
+      <span class="rep-icon">${_linkSvg}</span>
+      <span class="rep-label">Allergens</span>
+      <span class="rep-count" id="rep-count-${arRepId}">${countLabel}</span>
+      <div class="rep-bind-btn" onclick="openDd(event,'${arRepId}','Items')" title="Connect to list">${_chainSvg}</div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:3px;padding:4px 6px">${inner}</div>`;
+          z.appendChild(repEl);
+          if (EL_DEFS[z.id]) delete EL_DEFS[z.id]._rir_drop;
+
+          EL_DEFS[arRepId] = { name: 'Allergens', type: 'Repeater', section: sectionId, isRepeater: true, contextModel: 'on-repeater', props: [...REP_PROPS] };
+          S.ctxMap[arRepId] = S.ctxMap[parentRepId] ? [...S.ctxMap[parentRepId]] : [];
+          allergens.forEach((al, ai) => {
+            const a = ai + 1;
+            EL_DEFS[aiId(a)] = { name: `Allergen ${a}`, type: 'RepItem', section: sectionId, isRepItem: true, repTemplate: 'rir-ai-' + ts, props: [] };
+            EL_DEFS[atId(a)] = { name: 'Allergen',       type: 'Text',    section: sectionId, repTemplate: 'rir-at-' + ts, props: [{ k: 'Value', t: 'string' }, { k: 'Visible', t: 'boolean' }] };
+          });
+
+          S.bindings[arRepId + '|Items'] = { ctxId, fieldName: 'allergens', sample: '[{allergenName, allergenIcon}]' };
+          allergens.forEach((al, ai) => {
+            const a = ai + 1;
+            S.bindings[atId(a) + '|Value'] = { ctxId, fieldName: 'allergenName', sample: `"${al.allergenName}"` };
+          });
+        });
+
+        refreshAllPills();
+        refreshElementBindTags();
+        refreshRepeaterSkeletons();
+        const droppedDish = menuData[droppedCatIdx - 1]?.dishes?.[droppedDishIdx - 1];
+        toast('Allergens connected · sub-array of ' + (droppedDish?.name || 'dish'), true);
       }
 
       // ── Concept 2: per-level independent contexts ─────────────────────────
@@ -54028,6 +54899,11 @@
             website: 'https://sensible.com',
           },
         ],
+        'cms-rir-categories': [
+          { name: 'Starters',  description: 'Light bites to begin'      },
+          { name: 'Mains',     description: 'Signature main courses'    },
+          { name: 'Desserts',  description: 'Sweet endings'             },
+        ],
         'cms-restaurant-menu': [
           {
             categoryName: 'Starters',
@@ -54472,10 +55348,79 @@
         const rSysCtxs = allContexts.filter((c) => c.group === 'System');
         const rSysOpen = S.dd._sysOpen || false;
 
+        // M2 RiR: find contexts that have a reference field in their items and show them first
+        const isRirM2 = def?._rir_m2 === true;
+
+        // Build deduped list: one entry per context, first reference field with a known referencedCollection.
+        // Uses a 2-hop lookup: match if the reference points to the parent context OR to any context
+        // that is itself referenced by the parent — so e.g. Dishes(→Categories) matches when the
+        // parent is RestaurantMenu which also references Dishes.
+        const relatedCtxList = (() => {
+          if (!isRirM2) return [];
+          const parentCtxId = def._rir_m2_parentCtxId;
+          const parentCtx   = parentCtxId ? findSource(parentCtxId) : null;
+
+          // Collect all context IDs that the parent references (via any field)
+          const parentLinkedIds = new Set(parentCtxId ? [parentCtxId] : []);
+          if (parentCtx) {
+            const itemsField = parentCtx.fields?.find(f => f.name === 'items' && f.type === 'array');
+            (itemsField?.itemFields || []).forEach(f => {
+              if (f.referencedCollection) parentLinkedIds.add(f.referencedCollection);
+            });
+          }
+          // Also add collections referenced by the parent-linked contexts (2nd hop)
+          [...parentLinkedIds].forEach(linkedId => {
+            const linkedCtx = CTX_DEFS.find(c => c.id === linkedId);
+            const lf = linkedCtx?.fields?.find(f => f.name === 'items' && f.type === 'array');
+            (lf?.itemFields || []).forEach(f => {
+              if (f.referencedCollection) parentLinkedIds.add(f.referencedCollection);
+            });
+          });
+
+          const seen = new Set();
+          const result = [];
+          rUserCtxs.forEach(ctx => {
+            if (seen.has(ctx.id)) return;
+            const itemsField = ctx.fields?.find(f => f.name === 'items' && f.type === 'array');
+            if (!itemsField) return;
+            // Find first reference field whose target is in the parent-linked set
+            const refField = (itemsField.itemFields || []).find(f =>
+              f.type === 'reference' && f.referencedCollection &&
+              (parentLinkedIds.size === 0 || parentLinkedIds.has(f.referencedCollection))
+            );
+            if (!refField) return;
+            const refCtx = CTX_DEFS.find(c => c.id === refField.referencedCollection);
+            seen.add(ctx.id);
+            result.push({ ctx, refFieldName: refField.name, refCtxName: refCtx?.name || refField.referencedCollection });
+          });
+          return result;
+        })();
+
+        const relatedCtxSection = (() => {
+          if (!isRirM2 || relatedCtxList.length === 0) return '';
+          const rows = relatedCtxList.map(({ ctx, refFieldName, refCtxName }) => `
+        <div class="dd-sel-item ${srcId === ctx.id ? 'sel' : ''}" onclick="ddRepSelSource(event,'${ctx.id}')" style="${srcId !== ctx.id ? 'background:color-mix(in srgb,#0ea5e9 6%,transparent);border:1px solid color-mix(in srgb,#0369a1 20%,transparent);border-radius:6px;margin:1px 4px;' : ''}">
+          <div style="flex:1;min-width:0">
+            <div class="dd-sel-item-name" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+              ${resolveCtxName(ctx.id)}
+              <span style="font-size:9px;background:#0369a118;color:#0369a1;border:1px solid #0369a130;border-radius:10px;padding:1px 6px;font-weight:600;flex-shrink:0">↩ ${refFieldName} → ${refCtxName}</span>
+            </div>
+            <div class="dd-sel-item-sub">${ctx.source} · ${ctx.type}</div>
+          </div>
+        </div>`).join('');
+          return `
+        <div style="padding:4px 12px 2px;font-size:9px;font-weight:700;color:#0369a1;letter-spacing:.06em;text-transform:uppercase">Related — has parent reference</div>
+        ${rows}
+        <div style="padding:4px 12px 2px;font-size:9px;font-weight:700;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;margin-top:6px">All collections</div>`;
+        })();
+
+        const relatedIds = new Set(relatedCtxList.map(r => r.ctx.id));
+
         const ctxSrcItems =
           rUserCtxs.length === 0
             ? `<div class="dd-notice" style="padding:8px 12px;line-height:1.6">No data sources available on this section.</div>`
             : rUserCtxs
+                .filter(ctx => !relatedIds.has(ctx.id))
                 .map(
                   (ctx) => `
         <div class="dd-sel-item ${srcId === ctx.id ? 'sel' : ''}" onclick="ddRepSelSource(event,'${ctx.id}')">
@@ -54548,6 +55493,7 @@
 
         const srcItems = `<div class="dd-src-section">
       <div class="dd-src-header" style="display:flex;align-items:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h10"/></svg> Available Contexts <span class="dd-src-count">${rUserCtxs.length}</span>${repExploreBtn}</div>
+      ${relatedCtxSection}
       ${ctxSrcItems}
       ${repAddCtxLink}
       ${rSysCtxItems}
@@ -54637,6 +55583,7 @@
       Apply
     </button>
   `;
+        repositionDd();
       }
 
       function ddRepToggleSrc(e) {
@@ -54679,6 +55626,14 @@
         const ctx = findSource(ctxId);
         if (!ctx || !fieldName) return;
         const def = EL_DEFS[elId];
+
+        // M2 RiR: placeholder was created on drop — route to M2 dishes renderer
+        if (def?._rir_m2 === true) {
+          closeDd();
+          _addRirDishesLevelM2FromPanel(elId);
+          return;
+        }
+
         const sectionId = def?.section;
         const itemsOnly = S.dd?._itemsOnly === true;
         const openInspectorAfterBind = S.dd?._openInspectorAfterBind === true;
@@ -57013,6 +57968,28 @@
         window.toast = function () {};
         addRestaurantMenuRepeater(sBody, 'sec-d262-empty2', 'repeater-restaurant-home', 'home');
         window.toast = _toast;
+      })();
+
+      // ─── DEFAULT: Repeater in Repeater — outer Categories only ──────────────────
+      (function initRirRestaurantMenu() {
+        const _toast = window.toast;
+        window.toast = function () {};
+
+        // Section M1: outer Categories repeater with empty dish drop zones
+        const m1Body = document.querySelector('#sec-rir .s-body');
+        if (m1Body) addRirCategoriesRepeater(m1Body, 'sec-rir', 'repeater-rir', 'rir');
+
+        // Section M2: outer Categories repeater with empty dish drop zones
+        const m2Body = document.querySelector('#sec-rir-m2 .s-body');
+        if (m2Body) addRirCategoriesRepeater(m2Body, 'sec-rir-m2', 'repeater-rir-m2', 'rirm2', 'cms-rir-categories');
+
+        window.toast = _toast;
+      })();
+
+      // ─── BOOT: navigate to Repeater in Repeater page on load ────────────────────────
+      (function () {
+        const el = document.querySelector('.pp-sub[onclick*="Repeater in Repeater"]');
+        if (el) selectPage(el, 'Repeater in Repeater');
       })();
 
       // ─── DEFAULT: Restaurant Menu Use Case 2 in Repeater Page · sec-d262-concept2 ──

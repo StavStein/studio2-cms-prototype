@@ -1,0 +1,271 @@
+# Research Summary: Repeater Event Handlers — Studio 2 Editor
+
+**Date**: 2026-05-05
+**Project**: Repeater Event Handlers (Studio 2 Editor)
+**Goal**: Define which event handlers to expose when a Repeater component is selected in Studio 2
+**Research Phase**: Discovery complete (pre-spec)
+
+---
+
+## 1. Research Overview
+
+**Problem space**: The Repeater component in Wix Studio has an incomplete and partially broken event model. The CMS group is now taking ownership of the Repeater component definition for Studio 2, previously managed by the Velo group as an API-first feature. This is the right moment to define a coherent event contract and decide what gets exposed in the Studio 2 editor.
+
+**Research conducted**:
+
+| Research Type | Source ID | Status |
+|--------------|-----------|--------|
+| User Voice Research | SRC-UV | ✅ Completed (public channels only — internal User Voice unavailable) |
+| Competitor Research | SRC-COMP | ✅ Completed (Webflow, Framer, Bubble, Elementor, React, Wix Studio Classic) |
+| Data Research Plan | SRC-DATA | ✅ Completed (plan only — no actual data; build decision already made) |
+| Wix Internal Research | SRC-INT | ✅ Completed (Velo API docs, Studio Editor docs, public feature requests) |
+| Terminology Research | SRC-TERM | ✅ Completed (includes Wix UX Writing Glossary via API) |
+
+**Target audience**: Developers and Partners (agencies/freelancers) building sites and apps with Studio 2.
+
+---
+
+## 2. Research Summaries
+
+### 2.1 User Voice Research (SRC-UV)
+**Goal**: Identify what developers and partners are struggling with in the current Repeater event model.
+
+**Key findings**:
+- Developers cannot react to Repeater item data updates — `onItemUpdated` does not exist; every data change requires manual `forEachItem()` boilerplate
+- A Sept 2024 platform migration broke the `$item` selector inside event handlers; it always returns the first item's data regardless of which item was interacted with
+- Hover/mouse events silently fail on dataset-connected Repeaters — the most common production use case
+- Using `$w` selector inside a Repeater event handler affects all items, not just the clicked item — a non-obvious bug
+
+**Signal strength**: Moderate. Public channels only; internal support ticket data was unavailable. Mention counts are likely minimums.
+
+---
+
+### 2.2 Competitor Research (SRC-COMP)
+**Goal**: Understand how competing editors handle event models for repeating/dynamic-list components.
+
+**Key findings**:
+- No visual editor (Webflow, Framer, Bubble) exposes lifecycle events (item creation/removal) in a visual panel — Wix's `onItemReady`/`onItemRemoved` are unique
+- Per-item event scoping is the universal pain point across all editors; only Framer solves it cleanly via per-component-instance state machines
+- Webflow and Bubble users report the same scoping confusion as Wix users — this is an industry-wide problem without a clean solution in any visual editor
+- Dataset-connected Repeater hover breakage has no equivalent in any competitor (Webflow, Framer, Bubble decouple data binding from interactions)
+
+**Top opportunity**: Studio 2 can be the first visual editor with reliable lifecycle + interaction events, closing a gap no competitor has solved.
+
+---
+
+### 2.3 Data Research Plan (SRC-DATA)
+**Goal**: Define data questions to size the audience and prioritize v1 scope.
+
+**Key findings** (planned queries, no actual data returned):
+- Q1: Count of distinct accounts/sites with published Velo code referencing Repeater event handlers (last 90 days) — sizes the affected developer audience
+- Q2: Distribution of event handler types in published Velo code — directly informs which events to include in v1
+- Q3: Dataset-connected Repeater ratio — if 80%+ of Repeaters are dataset-connected, fixing hover/mouse events is a must-have
+- Q4: New-developer adoption funnel — Repeater creation → event handler → publish in 30 days — baseline for measuring Studio 2 improvements
+
+**Note**: Build decision is already made. Data questions are for prioritization only, not go/no-go.
+
+---
+
+### 2.4 Wix Internal Research (SRC-INT)
+**Goal**: Understand the current Repeater event model, existing infrastructure, and gaps that Studio 2 must address.
+
+**Key findings**:
+- `onItemReady` and `onItemRemoved` already exist in the Velo API and are wirable from the Properties & Events panel — **infrastructure exists; surface needs to move to the Inspector**
+- The feature request "Element Properties and Events in the Inspector Panel" is in "Collecting votes" status — open and unresolved; Studio 2 can ship this natively
+- `onItemUpdated` is a genuine API gap requiring new platform work (not a UI-only change)
+- The `$item` scoping regression from Sept 2024 is unconfirmed as fixed — a blocking dependency for the Studio 2 spec
+- Hover/mouse event breakage with dataset-connected Repeaters is an unconfirmed platform or dataset-layer bug — root cause unknown
+
+**Ranked solutions** (from internal research):
+1. Surface `onItemReady` and `onItemRemoved` in Studio 2 Inspector (low effort — infrastructure exists)
+2. Default to `$item`-scoped code stubs for Repeater event handlers (medium effort — code generation change)
+3. Expose `forItems()` as a panel-level "Update item" action (medium effort — bridges `onItemUpdated` gap)
+4. Align with Wix Blocks Dynamic Repeater event contract before finalizing the spec (low effort for research)
+
+---
+
+### 2.5 Terminology Research (SRC-TERM)
+**Goal**: Agree on naming for Repeater event handler concepts before the spec is written.
+
+**Key findings**:
+- "Repeater", "Event handler", and "Event" are all confirmed canonical terms in the Velo domain (Wix UX Writing Glossary)
+- **"Interaction" is a prohibited term in Studio Editor context** — the glossary reserves it for Animations & Effects. Do not use it in Studio 2 UI to mean event handlers.
+- "Item interaction events" (original term from research) renamed to **"Item events"** to avoid the prohibited term
+- Three open naming questions remain: `onItemUpdated` vs `onItemDataChanged`; Events section in Inspector vs. separate Properties & Events panel; "Dataset-connected Repeater" vs. "dynamic Repeater"
+
+---
+
+## 3. Key Observations
+
+| ID | Observation | Source |
+|----|-------------|--------|
+| OBS-01 | `onItemUpdated` does not exist — setting `.data` on an existing Repeater item fires no event; developers must manually call `forEachItem()` or `forItems()` as boilerplate after every data change | SRC-UV, SRC-INT |
+| OBS-02 | A Sept 2024 legacy→dynamic event handler migration broke the `$item` selector; it now always returns first-item data regardless of which item was clicked | SRC-UV |
+| OBS-03 | `onMouseIn`/`onMouseOut` silently stop working when a Repeater is connected to a dataset; no error is thrown, so many developers abandon the use case rather than report it | SRC-UV |
+| OBS-04 | Using `$w('#element')` inside a Repeater event handler selects the element across all items — not just the clicked one; the correct pattern (`$item`) is non-obvious and underpromoted | SRC-UV, SRC-INT |
+| OBS-05 | Developer mood is "frustrated" — the community consistently encounters events that should fire but don't, and events that fire on the wrong item | SRC-UV |
+| OBS-06 | No visual web editor (Webflow, Framer, Bubble) exposes lifecycle events (item creation/removal) in a visual panel; Wix's `onItemReady` and `onItemRemoved` are genuinely differentiated capabilities that competitors have not built | SRC-COMP |
+| OBS-07 | Per-item event scoping is the universal pain point across Webflow, Bubble, and Wix; all three editors have reported forum threads describing the same confusion | SRC-COMP |
+| OBS-08 | Framer solves per-item scoping by treating each component instance as its own state machine — each item has isolated state, so scoping is the default, not a workaround | SRC-COMP |
+| OBS-09 | Webflow users report confusion around CMS list scoping for interactions — "affect only this item's siblings" is the most-requested feature for Collection Lists | SRC-COMP |
+| OBS-10 | Bubble provides no native hover per Repeating Group cell; the workaround (Reusable Element for hover behavior) has been posted and re-posted dozens of times in the community | SRC-COMP |
+| OBS-11 | `onItemReady` and `onItemRemoved` are already wirable via the Properties & Events panel in the Code workspace — the panel infrastructure to surface them visually exists | SRC-INT |
+| OBS-12 | The community feature request "Element Properties and Events in the Inspector Panel" is listed as "Collecting votes" — it is an open, unresolved ask with no committed timeline | SRC-INT |
+| OBS-13 | `onItemUpdated` requires new Velo/platform API work — it cannot be delivered as a UI-only change in Studio 2 | SRC-INT |
+| OBS-14 | Whether the Sept 2024 `$item` scoping regression was fixed is unconfirmed — its status must be verified with the Velo/platform team before finalizing Studio 2's event contract | SRC-INT |
+| OBS-15 | Wix Blocks has a "Dynamic Repeater" variant with a potentially cleaner event contract; its architecture may have resolved some scoping issues that Studio 2 would otherwise inherit | SRC-INT |
+| OBS-16 | No audience-size data is available — the number of active Studio developer accounts using Repeater with event handlers is unknown; the data plan defines 4 queries to fill this gap | SRC-DATA |
+| OBS-17 | The build decision is already made; data questions are scoped to prioritization (which events, which order), not to whether to proceed | SRC-DATA |
+| OBS-18 | The Wix UX Writing Glossary prohibits "Interaction" in the Studio Editor domain — it is reserved for Animations & Effects and should not be used in Studio 2 UI copy to mean event handlers | SRC-TERM |
+| OBS-19 | "Event handler" and "Event" are both confirmed canonical terms in the Velo domain per the Wix UX Writing Glossary | SRC-TERM |
+| OBS-20 | "Repeater" is confirmed canonical in the Velo domain; use lowercase in UX copy and capitalize when referring to the official feature | SRC-TERM |
+
+---
+
+## 4. Editor-Solvable vs Platform-Dependent Gaps
+
+Studio 2's planned model — **event handlers exposed as properties at both the item and Repeater level, with logic attached via function binding** — resolves some of the gaps above natively, while others remain platform-dependent regardless of how the editor surfaces them.
+
+| Gap | Source observations | Resolved by property + function-binding model? | Why |
+|-----|---------------------|------------------------------------------------|-----|
+| Wrong-item data from `$item` selector | OBS-02 | ✅ Yes (editor-solvable) | The binding framework passes the current item context to the bound function. Developers never write `$item` manually, so the regression is bypassed at the surface level. |
+| `$w` selector affects all items instead of one | OBS-04 | ✅ Yes (editor-solvable) | Scoping is implicit in *where* the handler is attached: an item-level property receives the item; a Repeater-level property receives the Repeater. The wrong-selector class of bugs disappears. |
+| `onItemUpdated` does not fire when item data changes | OBS-01, OBS-13 | ❌ No (platform-dependent) | Surfacing the property in the inspector doesn't help if the runtime never emits the event. Platform must detect data updates on existing items and fire the event before any bound function can run. |
+| Hover/mouse events silently fail on dataset-connected Repeaters | OBS-03 | ❌ No (platform-dependent) | The event pipeline drops mouse events when a dataset is connected. Exposing `onMouseIn`/`onMouseOut` as properties does not fix the underlying delivery bug. |
+
+**Implication for the spec**: Studio 2 can ship the editor-side improvements independently and immediately close the scoping gaps. The platform-dependent gaps must be flagged as dependencies on the Velo/platform team — they cannot be resolved by Studio 2's editor work alone, no matter how the handlers are surfaced.
+
+---
+
+## 5. Synthesized Insights by Theme
+
+### Theme A — The Repeater lifecycle event model is incomplete and has no visual surface
+
+**INS-01**: Two lifecycle events exist today (`onItemReady`, `onItemRemoved`), but the most needed one is missing. Updating an existing item's data triggers no lifecycle event — forcing every developer to write the same `forEachItem()` boilerplate manually after every data update.
+- Supported by: OBS-01, OBS-13
+
+**INS-02**: The Properties & Events panel — where lifecycle events can be wired visually — is not accessible from the Inspector. Developers must navigate to a separate Code panel to find it. The panel infrastructure to expose these events in the Inspector already exists; the surface is the gap, not the capability.
+- Supported by: OBS-11, OBS-12
+
+**INS-03**: No competitor offers lifecycle events in any visual panel. This is a differentiating capability that already exists in the Wix API — but is effectively invisible in the current editor. Studio 2 can surface it as a first-class feature at low incremental engineering cost.
+- Supported by: OBS-06, OBS-11
+
+---
+
+### Theme B — Per-item event scoping is broken in code, but resolved by the property + function-binding model
+
+**INS-04**: The default coding pattern for Repeater events (`$w` selector) silently applies event handlers to all items, not just the interacted item. This is an industry-wide problem in code-first event models. Studio 2's planned approach — exposing handlers as item-level properties with implicit item context passed via function binding — sidesteps the issue entirely; developers never reach for `$w` because scoping is determined by where the property lives.
+- Supported by: OBS-04, OBS-07
+
+**INS-05**: The `$item` scoping regression (Sept 2024) only matters if developers write `$item` directly. With function binding, the editor passes the current item to the bound function as an argument — the regression becomes invisible to anyone wiring events through the inspector. It remains a concern only for hand-written Velo code, not for the Studio 2 visual surface.
+- Supported by: OBS-02, OBS-14
+
+**INS-06**: Framer's solution — treating each component instance as its own isolated state machine — eliminates the scoping problem by design rather than by workaround. Studio 2's property-on-item + function-binding model is the analogous solution: scoping is implicit in the attachment point, so the correct pattern is the *only* pattern available from the inspector.
+- Supported by: OBS-08, OBS-04
+
+---
+
+### Theme C — Dataset-connected Repeaters have silent failures that competitors don't
+
+**INS-07**: Hover/mouse events break silently on dataset-connected Repeaters. This failure mode is specific to Wix — no competitor (Webflow, Framer, Bubble) has a regression where data binding degrades interaction events. The most common production Repeater configuration is dataset-connected, which means this bug affects the majority of real-world use cases.
+- Supported by: OBS-03, OBS-07, OBS-09, OBS-10
+
+**INS-08**: The hover/mouse failure is almost certainly under-reported. It manifests as a silent failure with no error, so developers either remove the dataset connection, remove the hover effect, or switch to a workaround — without filing a bug. Signal counts in User Voice likely undercount the real impact.
+- Supported by: OBS-05, OBS-03
+
+---
+
+### Theme D — Studio 2 has a credible path to leapfrog competitors on Repeater events
+
+**INS-09**: Competitors have zero visual lifecycle event coverage. Wix has the API (production) and the panel wiring (production) — both already exist. Studio 2's task is surfacing what's already built into the Inspector, plus defining the missing `onItemUpdated` as a new platform request. The lift is low relative to the competitive advantage.
+- Supported by: OBS-06, OBS-11, OBS-13
+
+**INS-10**: The Framer model provides a concrete reference for what "right defaults" looks like: code component authors define the event contract; the panel exposes it visually; non-coders can override from the panel. Studio 2 can adapt this by generating `$item`-scoped event stubs by default — eliminating the #1 scoping mistake without requiring developers to know the workaround exists.
+- Supported by: OBS-08, OBS-04, OBS-19
+
+---
+
+### Theme E — Terminology conflict must be resolved before copy is written
+
+**INS-11**: "Interaction" means two conflicting things in the Studio 2 context. In the Velo domain it is the canonical term for event-driven functionality (clicks, hovers, form submissions). In the Studio Editor domain it is a prohibited term — reserved for Animations & Effects. Studio 2, which bridges both, cannot use "interaction" in UI copy without causing semantic confusion. "Item events" is the safe alternative.
+- Supported by: OBS-18, OBS-19
+
+---
+
+## 6. Contradictions & Tensions
+
+### T1 — Is the `$item` scoping regression still live?
+
+A core assumption of Studio 2's event model is that `$item` can be used reliably inside Repeater event handlers to scope to the current item. But the Sept 2024 platform update may have broken this.
+
+- **Evidence from SRC-UV**: Community forum posts from Sept 2024 confirm `$item` always returns first-item data after the migration. The workaround (`$w.at(event.context)`) is documented but not prominently surfaced.
+- **Evidence from SRC-INT**: The regression status is "unconfirmed" — it may be fixed, may still be live, or may be intentional behavior. Studio 2's spec cannot assume either way.
+
+**Implication**: If the regression is still live, any code stub generation that uses `$item` will generate broken code by default. This is blocking for the spec — must be confirmed with the Velo/platform team before finalizing.
+
+---
+
+### T2 — "Interaction" is correct in developer docs but prohibited in editor UI
+
+The Wix UX Writing Glossary contains contradictory guidance depending on domain:
+
+- **Evidence from SRC-TERM (Velo domain)**: "Interaction" is the canonical term for "custom functionality that lets your site respond to events, such as clicks, hover states."
+- **Evidence from SRC-TERM (Studio Editor domain)**: "Interactions" is explicitly prohibited — use "Animations & Effects" instead; "Interactions is too broad and unclear."
+
+**Implication**: Studio 2 documentation must use different terms for the same concept depending on the surface. Developer-facing API docs (Velo context) may use "interaction." Studio 2 UI copy must not.
+
+---
+
+### T3 — `onItemUpdated` is on the spec but off the platform roadmap
+
+The research clearly establishes `onItemUpdated` as the most needed missing lifecycle event and recommends it as a differentiator for Studio 2. But its existence depends on platform work owned by the Velo team — and the CMS group does not know whether it's on their roadmap.
+
+- **Evidence from SRC-UV**: Multiple user voice threads, official Velo API docs limitation note, and developer workarounds all confirm the gap is real.
+- **Evidence from SRC-INT**: Adding `onItemUpdated` requires Velo/platform team involvement; it cannot be shipped as a UI-only change.
+
+**Implication**: Studio 2 can spec `onItemUpdated` as a "differentiator" feature, but shipping it requires explicit platform team commitment. The spec should define it and flag it as a dependency.
+
+---
+
+## 7. Signals & Patterns
+
+**Signal 1 — Compound technical debt, but split cleanly between editor and platform**
+The Repeater event model has accumulated problems from multiple independent sources: a missing lifecycle event (`onItemUpdated`), a platform regression (`$item` scoping), a dataset-layer bug (hover events), and an inaccessible panel surface (Inspector gap). Studio 2's property + function-binding model resolves the editor-side gaps (scoping, surface) on its own; the platform-side gaps (`onItemUpdated`, dataset hover failure) require Velo/platform team work and cannot be closed by editor changes alone. The spec should treat these as two separate workstreams.
+
+**Signal 2 — The workaround ecosystem is a signal of unmet need**
+The developer community has built a robust set of workarounds: `forEachItem()` for missing `onItemUpdated`, `$w.at(event.context)` for broken `$item`, avoiding hover on dataset-connected Repeaters. These workarounds are widely shared in the community — which means the problems are real and common, but also that developers have adapted and may not be actively reporting them anymore.
+
+**Signal 3 — The visual surface gap is bigger than the API gap**
+Two lifecycle events already exist in production (`onItemReady`, `onItemRemoved`). The Properties & Events panel already exists. But developers using the Inspector in Studio don't know either capability exists. The most impactful single action for Studio 2 may not be adding new APIs — it may be surfacing what already works.
+
+**Signal 4 — Studio 2 has a competitive window before any competitor closes it**
+No competitor currently surfaces lifecycle events in a visual panel. Framer is closest to the right model but applies it only to code components. Webflow and Bubble both have the same per-item scoping problem that Wix has, with no resolution in sight. If Studio 2 ships a reliable, visual lifecycle + item event model, it would be the first professional web editor to do so.
+
+---
+
+## 8. Open Questions / Unknowns
+
+| # | Question | Why It Matters | Priority |
+|---|----------|---------------|----------|
+| OQ-01 | Is the Sept 2024 `$item` scoping regression fixed, still live, or intentional? | Blocking — Studio 2 event contract cannot be finalized without this answer. If still broken, the spec must either work around it or block on the fix. | **Blocking** |
+| OQ-02 | Which team owns the Properties & Events panel in Studio 2 — CMS group or editor infrastructure? | Determines who can implement the Inspector surface changes. If it's a shared surface, there may be architectural constraints on what Studio 2 can expose. | **High** |
+| OQ-03 | Is `onItemUpdated` on the Velo/platform roadmap, and if so, what timeline? | Determines whether `onItemUpdated` can be a v1 deliverable or must be scoped as a future differentiator with a platform dependency. | **High** |
+| OQ-04 | Does the Wix Blocks Dynamic Repeater have a cleaner event contract that Studio 2 should align with or deliberately diverge from? | Avoids architectural fragmentation across Wix's Repeater variants. | **Medium** |
+| OQ-05 | What is the actual distribution of event handler types in published Velo code? (Q2 from SRC-DATA) | Directly informs which events to include in v1 vs. defer. | **Medium** |
+| OQ-06 | Should `forEachItem()` / `forItems()` be surfaced as a panel-level "Run for each item" action in Studio 2? | Determines whether the workaround for missing `onItemUpdated` gets any panel treatment while the platform API gap remains open. | **Medium** |
+| OQ-07 | What is the scope of the hover/mouse event bug — is it the dataset layer or the Repeater event system? | Determines which team owns the fix and how hard it is to resolve before Studio 2 ships. | **Medium** |
+| OQ-08 | Does the Mobile Repeater (`$w/mobile-repeater`) share the same event model, or does Studio 2 need to spec it separately? | Determines whether this spec covers mobile or only desktop. | **Low** |
+
+---
+
+## Artifact Index
+
+| Artifact | Path |
+|----------|------|
+| Project Brief | `artifacts/project-brief-repeater-event-handlers.md` |
+| User Voice Research | `artifacts/discovery/user-voice-repeater-event-handlers.md` |
+| Competitor Research | `artifacts/discovery/competitor-research-repeater-event-handlers.md` |
+| Data Research Plan | `artifacts/discovery/data-analysis-plan-repeater-event-handlers.md` |
+| Wix Internal Research | `artifacts/discovery/internal-discovery-repeater-event-handlers.md` |
+| Terminology Guide | `artifacts/discovery/terminology-research-repeater-event-handlers.md` |
+| **This document** | `artifacts/discovery/research-summary-repeater-event-handlers.md` |

@@ -39,6 +39,7 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
+
 /* ── DECK ─────────────────────────────────────────────────── */
 .deck {
   position: relative;
@@ -48,7 +49,7 @@ html, body {
 
 .slide {
   position: absolute;
-  inset: 0;
+  top: 0; left: 0; right: 0; bottom: 48px;
   display: flex;
   flex-direction: column;
   opacity: 0;
@@ -121,6 +122,11 @@ html, body {
   text-overflow: ellipsis;
 }
 .demo-hint svg { flex-shrink: 0; }
+.demo-hint.note {
+  background: rgba(139,92,246,.12);
+  border-color: rgba(139,92,246,.3);
+  color: #a78bfa;
+}
 
 /* ── IFRAME BODY ──────────────────────────────────────────── */
 .iframe-body {
@@ -289,22 +295,18 @@ html, body {
 /* ── SLIDE 3: MECHANISMS ──────────────────────────────────── */
 .mech-wrap {
   width: 100%;
-  max-width: 920px;
+  max-width: 960px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 20px;
 }
 .mech-cols {
   display: grid;
-  grid-template-columns: 1fr 1px 1fr;
-  gap: 0;
-}
-.mech-divider {
-  background: var(--bd);
-  margin: 0 24px;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
 }
 .mech-card {
-  padding: 28px 32px;
+  padding: 22px 24px;
   background: var(--sur);
   border-radius: 12px;
   border: 1px solid var(--bd);
@@ -323,82 +325,143 @@ html, body {
 .mech-card.m1 .mech-label { color: var(--acc); }
 .mech-card.m2 .mech-label { color: var(--grn); }
 .mech-name {
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 700;
   letter-spacing: -.01em;
   color: var(--t1);
+  margin-top: -4px;
 }
 .mech-desc {
   font-size: 12px;
   color: var(--t2);
   line-height: 1.6;
 }
-.mech-diagram {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  padding: 12px 0;
-}
-.mech-node {
+
+/* context diagram */
+.ctx-diagram {
   display: flex;
   flex-direction: column;
+  gap: 8px;
+}
+.ctx-box {
+  border-radius: 8px;
+  border: 1.5px solid;
+  overflow: hidden;
+}
+.ctx-box.blue { border-color: var(--acc-b); }
+.ctx-box.green { border-color: rgba(16,185,129,.35); }
+.ctx-header {
+  padding: 6px 10px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  display: flex;
   align-items: center;
-  gap: 4px;
+  justify-content: space-between;
 }
-.mech-node-box {
-  padding: 6px 12px;
-  border-radius: 6px;
+.ctx-box.blue  .ctx-header { background: rgba(59,130,246,.14); color: var(--acc); }
+.ctx-box.green .ctx-header { background: rgba(16,185,129,.14); color: var(--grn); }
+.ctx-header-meta { font-size: 9px; font-weight: 500; opacity: .75; letter-spacing: 0; text-transform: none; }
+.ctx-body {
+  padding: 6px 0 6px 0;
+  background: var(--sur2);
+}
+.ctx-row {
+  padding: 4px 10px 4px 20px;
   font-size: 11px;
-  font-weight: 600;
-  border: 1px solid;
-  white-space: nowrap;
+  color: var(--t2);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1.3;
 }
-.mech-card.m1 .mech-node-box { background: var(--acc-d); border-color: var(--acc-b); color: var(--acc); }
-.mech-card.m2 .mech-node-box { background: var(--grn-d); border-color: rgba(16,185,129,.3); color: var(--grn); }
-.mech-node-label {
+.ctx-row::before {
+  content: '•';
+  color: var(--t4);
+  flex-shrink: 0;
+}
+.ctx-row.array-field {
+  background: rgba(59,130,246,.08);
+  color: var(--acc);
+  font-weight: 600;
+  border-left: 2px solid var(--acc);
+  padding-left: 18px;
+}
+.ctx-row.array-field::before { color: var(--acc); }
+.ctx-nested {
+  margin: 4px 10px 4px 26px;
+  border-left: 2px solid var(--bd2);
+  padding-left: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ctx-nested .ctx-row {
+  padding: 2px 4px;
   font-size: 10px;
   color: var(--t3);
 }
-.mech-arrow {
-  flex: 1;
+.ctx-nested .ctx-row::before { color: var(--t4); }
+.ctx-autofilter {
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--grn);
+  background: rgba(16,185,129,.08);
+  border-top: 1px solid rgba(16,185,129,.15);
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 0 6px;
-  position: relative;
+  gap: 5px;
 }
-.mech-arrow::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 0; right: 0;
+.ctx-arrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px;
+}
+.ctx-arrow-line {
+  flex: 1;
   height: 1px;
   background: var(--bd2);
-}
-.mech-arrow-label {
   position: relative;
+}
+.ctx-arrow-label {
   font-size: 9px;
   color: var(--t3);
-  background: var(--sur);
-  padding: 1px 5px;
-  border-radius: 3px;
-  z-index: 1;
   white-space: nowrap;
 }
-.mech-when {
+
+/* pros / cons */
+.pro-con {
   display: flex;
+  flex-direction: column;
   gap: 6px;
-  padding: 8px 12px;
-  background: var(--sur2);
-  border-radius: 6px;
-  font-size: 11px;
-  color: var(--t2);
-  align-items: flex-start;
-  line-height: 1.45;
 }
-.mech-when b { color: var(--t1); }
+.pro-con-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  margin-top: 4px;
+  margin-bottom: 2px;
+}
+.pro-con-label.pros { color: var(--grn); }
+.pro-con-label.cons { color: var(--red); }
+.pro-row, .con-row {
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
+  line-height: 1.5;
+  align-items: flex-start;
+}
+.pro-row { color: var(--t2); }
+.con-row { color: var(--t2); }
+.pro-icon { color: var(--grn); font-size: 12px; flex-shrink: 0; margin-top: 1px; }
+.con-icon { color: var(--red);  font-size: 12px; flex-shrink: 0; margin-top: 1px; }
+
 .mech-footer {
-  padding: 14px 18px;
+  padding: 12px 18px;
   background: var(--sur2);
   border-radius: 8px;
   border: 1px solid var(--bd);
@@ -408,13 +471,23 @@ html, body {
 }
 .mech-footer strong { color: var(--t1); }
 
-/* ── NAV ARROWS ───────────────────────────────────────────── */
-.nav-arrow {
+/* ── FOOTER NAV ───────────────────────────────────────────── */
+.nav-footer {
   position: fixed;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 44px; height: 44px;
-  border-radius: 50%;
+  bottom: 0; left: 0; right: 0;
+  height: 48px;
+  background: var(--sur);
+  border-top: 1px solid var(--bd);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  z-index: 500;
+  flex-shrink: 0;
+}
+.nav-arrow {
+  width: 36px; height: 36px;
+  border-radius: 8px;
   background: var(--sur2);
   border: 1px solid var(--bd2);
   color: var(--t2);
@@ -422,26 +495,19 @@ html, body {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 500;
   transition: background .15s, color .15s, opacity .15s;
-  opacity: .65;
+  opacity: .8;
+  flex-shrink: 0;
 }
 .nav-arrow:hover { background: var(--sur3); color: var(--t1); opacity: 1; }
-.nav-arrow:active { transform: translateY(-50%) scale(.93); }
-.nav-arrow.prev { left: 16px; }
-.nav-arrow.next { right: 16px; }
-.nav-arrow.disabled { opacity: .2; pointer-events: none; }
+.nav-arrow:active { transform: scale(.93); }
+.nav-arrow.disabled { opacity: .25; pointer-events: none; }
 
 /* ── PROGRESS ─────────────────────────────────────────────── */
 .progress {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 6px;
-  z-index: 500;
 }
 .dot {
   width: 5px; height: 5px;
@@ -455,14 +521,12 @@ html, body {
 
 /* ── SLIDE COUNT ──────────────────────────────────────────── */
 .slide-count {
-  position: fixed;
-  bottom: 20px;
-  right: 24px;
   font-size: 10px;
   color: var(--t3);
-  z-index: 500;
   font-variant-numeric: tabular-nums;
   letter-spacing: .04em;
+  min-width: 36px;
+  text-align: right;
 }
 
 /* ── UTILITY ──────────────────────────────────────────────── */
@@ -481,30 +545,9 @@ html, body {
   <!-- ── SLIDE 1: COVER ─────────────────────────────────────── -->
   <div class="slide active" data-index="0">
     <div class="content-slide" style="background: radial-gradient(ellipse 80% 60% at 50% 30%, rgba(59,130,246,.07) 0%, transparent 70%);">
-      <div class="cover-eyebrow">Studio 2 CMS · Product Review</div>
+      <div class="cover-eyebrow">Product Review</div>
       <div class="cover-title">Repeater in<br><em>Repeater</em></div>
-      <div class="cover-sub">
-        Builders who organize content as parent → children can't render that shape in Studio 2 today — they fall back on multi-dataset hacks, side-by-side filtered repeaters, or Velo code. This spec closes that gap.
-      </div>
-      <div class="cover-pills">
-        <div class="pill pill-blue">
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5" opacity=".4"/></svg>
-          Depth: 3 levels
-        </div>
-        <div class="pill pill-grn">
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 1 0 14A7 7 0 0 1 8 1zm3.5 4.5-4 4-2-2-1 1 3 3 5-5-1-1z"/></svg>
-          Two binding mechanisms
-        </div>
-        <div class="pill pill-yel">
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 1 0 14A7 7 0 0 1 8 1zM7 4v5l4 2.5.75-1.25L8.5 8.5V4H7z"/></svg>
-          Item limit (no pagination)
-        </div>
-        <div class="pill pill-blue">
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M2 3h3v2H2V3zm0 4h5v2H2V7zm0 4h7v2H2v-2zm7-8h5v2H9V3zm3 4h2v2h-2V7z"/></svg>
-          AI-assisted binding
-        </div>
-      </div>
-      <div class="cover-date">May 2026 · v5 Draft</div>
+      <div class="cover-date">Stav Stein</div>
     </div>
   </div>
 
@@ -513,7 +556,7 @@ html, body {
     <div class="content-slide" style="justify-content: flex-start; padding-top: 52px; overflow-y: auto;">
       <div class="comp-wrap">
         <div class="s-eyebrow">Competitive Landscape</div>
-        <div class="s-title">Nested repeating is table-stakes</div>
+        <div class="s-title">Nested Repeaters — How are our competitors doing it?</div>
         <div class="s-sub">"There is no design risk in shipping this. The risk is shipping it slowly."</div>
 
         <table class="comp-table">
@@ -588,68 +631,107 @@ html, body {
 
   <!-- ── SLIDE 3: MECHANISMS ─────────────────────────────────── -->
   <div class="slide" data-index="2">
-    <div class="content-slide" style="justify-content: flex-start; padding-top: 48px; overflow-y: auto;">
+    <div class="content-slide" style="justify-content: flex-start; padding-top: 44px; overflow-y: auto;">
       <div class="mech-wrap">
         <div>
           <div class="s-eyebrow">Two Binding Mechanisms</div>
-          <div class="s-title">Same flow, two data shapes</div>
-          <div class="s-sub">Both surface inside the same <strong style="color:var(--t1)">Connect data</strong> panel and produce automatic per-parent-row rendering. The builder picks whichever matches their collection schema.</div>
+          <div class="s-title">Same result — two ways your data can be shaped</div>
+          <div class="s-sub">A restaurant menu page: outer repeater shows <strong style="color:var(--t1)">Categories</strong>, inner repeater shows <strong style="color:var(--t1)">Dishes</strong> per category. How you connect them depends on where the relationship lives in your schema.</div>
         </div>
 
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="mech-cols">
 
-          <!-- M1 -->
+          <!-- M1: Forward Reference -->
           <div class="mech-card m1">
             <div class="mech-label">Mechanism 1</div>
-            <div class="mech-name">Forward Reference</div>
-            <div class="mech-desc">The parent collection owns an <strong style="color:var(--t1)">array or multi-reference field</strong> that directly points to child items. Picked via the new <strong style="color:var(--t1)">This item</strong> scope in the binding picker.</div>
-            <div class="mech-diagram">
-              <div class="mech-node">
-                <div class="mech-node-box">Meals</div>
-                <div class="mech-node-label">Parent collection</div>
-              </div>
-              <div class="mech-arrow" style="flex:1;padding:0 8px;">
-                <div class="mech-arrow-label">dishes[ ] field →</div>
-              </div>
-              <div class="mech-node">
-                <div class="mech-node-box">Dishes</div>
-                <div class="mech-node-label">Child array</div>
+            <div class="mech-name">Array field on the parent</div>
+            <div class="mech-desc">
+              The <strong style="color:var(--t1)">Menu Categories</strong> collection has a <strong style="color:var(--acc)">dishes&nbsp;[]</strong> array field that stores the dishes directly. The inner repeater binds to that field — one context, no extra setup.
+            </div>
+
+            <!-- Diagram: single context tree -->
+            <div class="ctx-diagram">
+              <div class="ctx-box blue">
+                <div class="ctx-header">
+                  Context: Menu Categories
+                  <span class="ctx-header-meta">Sort: A–Z</span>
+                </div>
+                <div class="ctx-body">
+                  <div class="ctx-row">Name</div>
+                  <div class="ctx-row">Image</div>
+                  <div class="ctx-row array-field">dishes&nbsp;[ ]&nbsp;&nbsp;←&nbsp;bind inner repeater here</div>
+                  <div class="ctx-nested">
+                    <div class="ctx-row">Dish name</div>
+                    <div class="ctx-row">Price</div>
+                    <div class="ctx-row">Photo</div>
+                  </div>
+                </div>
               </div>
             </div>
-            <div class="mech-when">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="var(--acc)" style="flex-shrink:0;margin-top:1px"><path d="M8 1a7 7 0 1 1 0 14A7 7 0 0 1 8 1zM7 4v5l4 2.5.75-1.25L8.5 8.5V4H7z"/></svg>
-              <span>Use when the <b>parent owns</b> the relationship — e.g. a "Meals" collection with a <code style="font-size:10px;color:var(--acc)">dishes</code> multi-ref field.</span>
+
+            <div class="pro-con">
+              <div class="pro-con-label pros">Pros</div>
+              <div class="pro-row"><span class="pro-icon">✓</span> Works out of the box — one context, no extra steps</div>
+              <div class="pro-row"><span class="pro-icon">✓</span> Covers most use-cases: display the list as stored</div>
+              <div class="pro-con-label cons">Cons</div>
+              <div class="con-row"><span class="con-icon">✗</span> Overcomplicated context configuration</div>
             </div>
           </div>
 
-          <!-- M2 -->
+          <!-- M2: Reverse Reference -->
           <div class="mech-card m2">
             <div class="mech-label">Mechanism 2</div>
-            <div class="mech-name">Reverse Reference</div>
-            <div class="mech-desc">The <strong style="color:var(--t1)">child collection</strong> holds a reference field pointing back to the parent. The system introspects the schema and wires a batched per-row filter automatically. Picked via the <strong style="color:var(--t1)">Related collections</strong> section.</div>
-            <div class="mech-diagram">
-              <div class="mech-node">
-                <div class="mech-node-box" style="background:var(--grn-d);border-color:rgba(16,185,129,.3);color:var(--grn)">Dishes</div>
-                <div class="mech-node-label">Child collection</div>
+            <div class="mech-name">Separate collection with a back-reference</div>
+            <div class="mech-desc">
+              The <strong style="color:var(--t1)">Dishes</strong> collection has a <strong style="color:var(--grn)">category</strong> reference field pointing back to Menu Categories. A second context is added — the platform automatically filters it to the current category row.
+            </div>
+
+            <!-- Diagram: two contexts stacked -->
+            <div class="ctx-diagram">
+              <div class="ctx-box blue">
+                <div class="ctx-header">Context: Menu Categories</div>
+                <div class="ctx-body">
+                  <div class="ctx-row">Name</div>
+                  <div class="ctx-row">Image</div>
+                  <div class="ctx-row">dishes&nbsp;[ ]</div>
+                </div>
               </div>
-              <div class="mech-arrow" style="flex:1;padding:0 8px;">
-                <div class="mech-arrow-label">← .meal ref field</div>
+              <!-- arrow between contexts -->
+              <div style="display:flex;align-items:center;padding:4px 12px;gap:6px;">
+                <div style="height:1px;flex:1;background:var(--bd2);"></div>
+                <div style="font-size:9px;color:var(--t3);white-space:nowrap;">+ add Dishes context</div>
+                <div style="height:1px;flex:1;background:var(--bd2);"></div>
               </div>
-              <div class="mech-node">
-                <div class="mech-node-box" style="background:var(--grn-d);border-color:rgba(16,185,129,.3);color:var(--grn)">Meals</div>
-                <div class="mech-node-label">Parent collection</div>
+              <div class="ctx-box green">
+                <div class="ctx-header">
+                  Context: Dishes
+                  <span class="ctx-header-meta" style="color:var(--grn);">Related to Menu Categories</span>
+                </div>
+                <div class="ctx-body">
+                  <div class="ctx-row">Dish name</div>
+                  <div class="ctx-row">Price</div>
+                  <div class="ctx-row">Photo</div>
+                  <div class="ctx-row">Allergens&nbsp;[ ]</div>
+                </div>
+                <div class="ctx-autofilter">
+                  <svg width="11" height="11" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 1 0 14A7 7 0 0 1 8 1zm3.5 4.5-4 4-2-2-1 1 3 3 5-5-1-1z"/></svg>
+                  Auto-filtered by current category ID
+                </div>
               </div>
             </div>
-            <div class="mech-when" style="border-color:rgba(16,185,129,.2);background:var(--grn-d);">
-              <svg width="14" height="14" viewBox="0 0 16 16" fill="var(--grn)" style="flex-shrink:0;margin-top:1px"><path d="M8 1a7 7 0 1 1 0 14A7 7 0 0 1 8 1zM7 4v5l4 2.5.75-1.25L8.5 8.5V4H7z"/></svg>
-              <span>Use when the <b>child owns</b> the reference — e.g. a "Dishes" collection with a <code style="font-size:10px;color:var(--grn)">meal</code> field pointing to Meals. <b>No parent field needed.</b></span>
+
+            <div class="pro-con">
+              <div class="pro-con-label pros">Pros</div>
+              <div class="pro-row"><span class="pro-icon">✓</span> Full sort, filter &amp; page-size on the dishes list</div>
+              <div class="pro-row"><span class="pro-icon">✓</span> Consistent with how the rest of the platform works</div>
+              <div class="pro-con-label cons">Cons</div>
+              <div class="con-row"><span class="con-icon">✗</span> Requires a second context — more setup steps</div>
+              <div class="con-row"><span class="con-icon">✗</span> Filter child by parent context — additional complexity</div>
             </div>
           </div>
-        </div>
 
-        <div class="mech-footer">
-          Both mechanisms: <strong>automatic per-row filtering</strong> · no manual dataset wiring · <strong>batched fetch</strong> (no N+1) · same inspector + cascade-disconnect model
-        </div>
+        </div><!-- /mech-cols -->
+
       </div>
     </div>
   </div>
@@ -657,275 +739,169 @@ html, body {
   <!-- ── SLIDE 4: M1 HAPPY FLOW (iframe) ──────────────────────── -->
   <div class="slide" data-index="3">
     <div class="slide-header">
-      <span class="slide-num">4 / 13</span>
+      <span class="slide-num">4 / 11</span>
       <span class="slide-title">Mechanism 1 · Happy Flow</span>
       <span class="slide-sep"></span>
       <span class="demo-hint">
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M3 2l10 6-10 6V2z"/></svg>
-        Drop nested repeater into outer item → Connect data → pick <strong>dishes[ ]</strong> from "This item" scope → canvas renders per-row children
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-5 6a5 5 0 0 1 10 0H3z"/></svg>
+        "I want to show the dishes for each menu category on my restaurant page"
       </span>
     </div>
     <div class="iframe-body">
-      <iframe src="pages/repeater-in-repeater/index.html" title="Prototype – M1 happy flow"></iframe>
+      <iframe src="/pages/context-binding-prototype/binding-platform-demo.html#page=Repeater+in+Repeater" title="Prototype – M1 happy flow"></iframe>
     </div>
   </div>
 
   <!-- ── SLIDE 5: M2 HAPPY FLOW (iframe) ──────────────────────── -->
   <div class="slide" data-index="4">
     <div class="slide-header">
-      <span class="slide-num">5 / 13</span>
+      <span class="slide-num">5 / 11</span>
       <span class="slide-title">Mechanism 2 · Happy Flow</span>
       <span class="slide-sep"></span>
       <span class="demo-hint">
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M3 2l10 6-10 6V2z"/></svg>
-        Drop nested repeater → Connect data → pick <strong>Related Collections → Dishes via meal</strong> → system auto-wires batched per-row filter
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-5 6a5 5 0 0 1 10 0H3z"/></svg>
+        "I want to show the dishes for each menu category on my restaurant page"
       </span>
     </div>
     <div class="iframe-body">
-      <iframe src="pages/repeater-in-repeater/index.html" title="Prototype – M2 happy flow"></iframe>
+      <iframe src="/pages/context-binding-prototype/binding-platform-demo.html#page=Repeater+in+Repeater" title="Prototype – M2 happy flow"></iframe>
     </div>
   </div>
 
   <!-- ── SLIDE 6: SORT & FILTER — M1 ──────────────────────────── -->
   <div class="slide" data-index="5">
     <div class="slide-header">
-      <span class="slide-num">6 / 13</span>
+      <span class="slide-num">6 / 11</span>
       <span class="slide-title">Sort &amp; Filter · Mechanism 1</span>
-      <span class="slide-sep"></span>
-      <span class="demo-hint">
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M3 2l10 6-10 6V2z"/></svg>
-        Open sort/filter on nested repeater bound via M1 → filters are scoped to the parent row's child array context
-      </span>
     </div>
     <div class="iframe-body">
-      <iframe src="pages/repeater-in-repeater/index.html" title="Prototype – Sort/Filter M1"></iframe>
+      <iframe src="/pages/context-binding-prototype/binding-platform-demo.html#page=Repeater+in+Repeater" title="Prototype – Sort/Filter M1"></iframe>
     </div>
   </div>
 
   <!-- ── SLIDE 7: SORT & FILTER — M2 ──────────────────────────── -->
   <div class="slide" data-index="6">
     <div class="slide-header">
-      <span class="slide-num">7 / 13</span>
+      <span class="slide-num">7 / 11</span>
       <span class="slide-title">Sort &amp; Filter · Mechanism 2</span>
       <span class="slide-sep"></span>
       <span class="demo-hint">
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M3 2l10 6-10 6V2z"/></svg>
-        Sort and filter on nested repeater bound via M2 → filters apply on top of the auto-wired hasSome per-row filter
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-5 6a5 5 0 0 1 10 0H3z"/></svg>
+        "I want to filter out dishes that contain allergens within each category"
+      </span>
+      <span class="demo-hint note">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a7 7 0 1 1 0 14A7 7 0 0 1 8 1zm3.5 4.5-4 4-2-2-1 1 3 3 5-5-1-1z"/></svg>
+        Auto-filter by parent context via reference fields
       </span>
     </div>
     <div class="iframe-body">
-      <iframe src="pages/repeater-in-repeater/index.html" title="Prototype – Sort/Filter M2"></iframe>
+      <iframe src="/pages/context-binding-prototype/binding-platform-demo.html#page=Repeater+in+Repeater" title="Prototype – Sort/Filter M2"></iframe>
     </div>
   </div>
 
   <!-- ── SLIDE 8: ITEM LIMIT ───────────────────────────────────── -->
   <div class="slide" data-index="7">
     <div class="slide-header">
-      <span class="slide-num">8 / 13</span>
+      <span class="slide-num">8 / 11</span>
       <span class="slide-title">Item Limit &amp; Performance Warning</span>
       <span class="slide-sep"></span>
       <span class="demo-hint">
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M3 2l10 6-10 6V2z"/></svg>
-        Configure item limit (default 10, range 1–100) → inspector shows outer × nested estimate → warning fires when combined total exceeds threshold
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-5 6a5 5 0 0 1 10 0H3z"/></svg>
+        "I only want to show the top 3 featured dishes per category"
       </span>
     </div>
     <div class="iframe-body">
-      <iframe src="pages/repeater-in-repeater/index.html" title="Prototype – Item limit"></iframe>
+      <iframe src="/pages/context-binding-prototype/binding-platform-demo.html#page=Repeater+in+Repeater" title="Prototype – Item limit"></iframe>
     </div>
   </div>
 
   <!-- ── SLIDE 9: CASCADE DISCONNECT ──────────────────────────── -->
   <div class="slide" data-index="8">
     <div class="slide-header">
-      <span class="slide-num">9 / 14</span>
-      <span class="slide-title">Disconnect &amp; Replace — Cascade Warning</span>
+      <span class="slide-num">9 / 11</span>
+      <span class="slide-title">Disconnect &amp; Replace</span>
       <span class="slide-sep"></span>
       <span class="demo-hint">
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M3 2l10 6-10 6V2z"/></svg>
-        Disconnect outer repeater → warning shows count of grandchild bindings affected → Cancel preserves everything / Confirm cascades the disconnect
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-5 6a5 5 0 0 1 10 0H3z"/></svg>
+        "I want to swap my menu categories for a different collection"
       </span>
     </div>
     <div class="iframe-body">
-      <iframe src="pages/repeater-in-repeater/index.html" title="Prototype – Cascade disconnect"></iframe>
+      <iframe src="/pages/context-binding-prototype/binding-platform-demo.html#page=Repeater+in+Repeater" title="Prototype – Cascade disconnect"></iframe>
     </div>
   </div>
 
-  <!-- ── SLIDE 10: COMBINED BIND CTA ──────────────────────────── -->
+  <!-- ── SLIDE 10: DEPTH LIMIT EDGE CASE ──────────────────────── -->
   <div class="slide" data-index="9">
     <div class="slide-header">
-      <span class="slide-num">10 / 14</span>
-      <span class="slide-title">Combined Bind CTA · One-click wire</span>
+      <span class="slide-num">10 / 11</span>
+      <span class="slide-title">4th Level Drop Blocked</span>
       <span class="slide-sep"></span>
       <span class="demo-hint">
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M3 2l10 6-10 6V2z"/></svg>
-        Select an unbound element inside the nested repeater → "Bind · [field] + Repeater → items" CTA appears → single click wires both the field binding and the repeater Items together
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm-5 6a5 5 0 0 1 10 0H3z"/></svg>
+        "I want to show allergens inside dishes inside categories — how deep can I go?"
       </span>
     </div>
     <div class="iframe-body">
-      <iframe src="pages/repeater-in-repeater/index.html" title="Prototype – Combined bind CTA"></iframe>
+      <iframe src="/pages/context-binding-prototype/binding-platform-demo.html#page=Repeater+in+Repeater" title="Prototype – Depth limit"></iframe>
     </div>
   </div>
 
-  <!-- ── SLIDE 11: DEPTH LIMIT EDGE CASE ──────────────────────── -->
+  <!-- ── SLIDE 11: THANK YOU ────────────────────────────────────── -->
   <div class="slide" data-index="10">
-    <div class="slide-header">
-      <span class="slide-num">11 / 14</span>
-      <span class="slide-title">Edge Case · 4th Level Drop Blocked</span>
-      <span class="slide-sep"></span>
-      <span class="demo-hint">
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M3 2l10 6-10 6V2z"/></svg>
-        Try to drop a 4th-level repeater inside the 3rd-level template → drop is blocked → inspector surfaces depth limit message with explanation
-      </span>
-    </div>
-    <div class="iframe-body">
-      <iframe src="pages/repeater-in-repeater/index.html" title="Prototype – Depth limit"></iframe>
-    </div>
-  </div>
-
-  <!-- ── SLIDE 12: OUTER NOT CONNECTED ────────────────────────── -->
-  <div class="slide" data-index="11">
-    <div class="slide-header">
-      <span class="slide-num">12 / 14</span>
-      <span class="slide-title">Empty State · Outer Repeater Unbound</span>
-      <span class="slide-sep"></span>
-      <span class="demo-hint">
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor"><path d="M3 2l10 6-10 6V2z"/></svg>
-        Drop nested repeater before outer is connected → "Connect outer repeater first" state → nested repeater guides builder back to outer configuration
-      </span>
-    </div>
-    <div class="iframe-body">
-      <iframe src="pages/repeater-in-repeater/index.html" title="Prototype – Outer not connected"></iframe>
-    </div>
-  </div>
-
-  <!-- ── SLIDE 13: FLOWS NOT IN PRESENTATION ──────────────────── -->
-  <div class="slide" data-index="12">
-    <div class="content-slide" style="justify-content: flex-start; padding-top: 52px; overflow-y: auto;">
-      <div class="comp-wrap">
-        <div class="s-eyebrow">For Reference</div>
-        <div class="s-title">In the spec — not demoed today</div>
-        <div class="s-sub">Full Phase 1 scope. These flows are specified and will need sign-off before dev handoff.</div>
-
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;">
-
-          <div style="background:var(--sur);border:1px solid var(--bd);border-radius:10px;padding:20px 22px;display:flex;flex-direction:column;gap:12px;">
-            <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--acc);">Binding &amp; UX</div>
-
-            <div style="display:flex;flex-direction:column;gap:10px;">
-              <div style="display:flex;gap:10px;align-items:flex-start;">
-                <span class="badge badge-blue" style="flex-shrink:0;margin-top:1px;">FR-002</span>
-                <div>
-                  <div style="font-size:12px;font-weight:600;color:var(--t1);margin-bottom:2px;">Auto-bind on drop</div>
-                  <div style="font-size:11px;color:var(--t2);line-height:1.45;">When a Repeater is dropped into a bound outer item, system auto-binds Items to the first available Child array — zero clicks needed.</div>
-                </div>
-              </div>
-              <div style="display:flex;gap:10px;align-items:flex-start;">
-                <span class="badge badge-blue" style="flex-shrink:0;margin-top:1px;">FR-004</span>
-                <div>
-                  <div style="font-size:12px;font-weight:600;color:var(--t1);margin-bottom:2px;">Inherited vs. directly attached context</div>
-                  <div style="font-size:11px;color:var(--t2);line-height:1.45;">Inspector context card visually distinguishes contexts inherited from the parent item vs. directly attached — two labelled groups.</div>
-                </div>
-              </div>
-              <div style="display:flex;gap:10px;align-items:flex-start;">
-                <span class="badge badge-blue" style="flex-shrink:0;margin-top:1px;">FR-007</span>
-                <div>
-                  <div style="font-size:12px;font-weight:600;color:var(--t1);margin-bottom:2px;">Replace outer repeater source</div>
-                  <div style="font-size:11px;color:var(--t2);line-height:1.45;">Warning before replacing (not just disconnecting) the outer's Items source — shows accurate grandchild binding count affected.</div>
-                </div>
-              </div>
-              <div style="display:flex;gap:10px;align-items:flex-start;">
-                <span class="badge badge-blue" style="flex-shrink:0;margin-top:1px;">FR-008</span>
-                <div>
-                  <div style="font-size:12px;font-weight:600;color:var(--t1);margin-bottom:2px;">Undo / recovery after disconnect</div>
-                  <div style="font-size:11px;color:var(--t2);line-height:1.45;">Persistent undo stack covers nested binding changes — builder can revert a cascade disconnect immediately.</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div style="background:var(--sur);border:1px solid var(--bd);border-radius:10px;padding:20px 22px;display:flex;flex-direction:column;gap:12px;">
-            <div style="font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--grn);">Empty &amp; Error States</div>
-
-            <div style="display:flex;flex-direction:column;gap:10px;">
-              <div style="display:flex;gap:10px;align-items:flex-start;">
-                <span class="badge badge-grn" style="flex-shrink:0;margin-top:1px;">FR-011</span>
-                <div>
-                  <div style="font-size:12px;font-weight:600;color:var(--t1);margin-bottom:2px;">No child arrays available</div>
-                  <div style="font-size:11px;color:var(--t2);line-height:1.45;">When parent collection has no array/multi-ref fields AND no related collections exist — binding picker shows empty state with a path to modify the schema.</div>
-                </div>
-              </div>
-              <div style="display:flex;gap:10px;align-items:flex-start;">
-                <span class="badge badge-grn" style="flex-shrink:0;margin-top:1px;">FR-012</span>
-                <div>
-                  <div style="font-size:12px;font-weight:600;color:var(--t1);margin-bottom:2px;">Empty child array per parent row</div>
-                  <div style="font-size:11px;color:var(--t2);line-height:1.45;">A parent row whose child array has 0 entries renders an empty nested repeater area — layout does not collapse and other rows stay functional.</div>
-                </div>
-              </div>
-              <div style="display:flex;gap:10px;align-items:flex-start;">
-                <span class="badge badge-grn" style="flex-shrink:0;margin-top:1px;">FR-013</span>
-                <div>
-                  <div style="font-size:12px;font-weight:600;color:var(--t1);margin-bottom:2px;">Context mismatch indicator</div>
-                  <div style="font-size:11px;color:var(--t2);line-height:1.45;">Inspector flags when the nested repeater's Items source differs from its inherited parent context — e.g. a "Recommended" global list placed inside each row.</div>
-                </div>
-              </div>
-              <div style="display:flex;gap:10px;align-items:flex-start;">
-                <span class="badge" style="background:var(--yel-d);color:var(--yel);flex-shrink:0;margin-top:1px;">FR-014/15</span>
-                <div>
-                  <div style="font-size:12px;font-weight:600;color:var(--t1);margin-bottom:2px;">AI-assisted binding</div>
-                  <div style="font-size:11px;color:var(--t2);line-height:1.45;">Builder describes the layout in natural language → AI agent creates and binds Outer + Nested Repeater → builder reviews and accepts before canvas commit.</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── SLIDE 14: THANK YOU ────────────────────────────────────── -->
-  <div class="slide" data-index="13">
-    <div class="content-slide" style="background: radial-gradient(ellipse 70% 50% at 50% 55%, rgba(59,130,246,.06) 0%, transparent 70%);">
-      <div style="display:flex;flex-direction:column;align-items:center;gap:20px;text-align:center;">
-        <div style="width:56px;height:56px;border-radius:14px;background:var(--acc-d);border:1px solid var(--acc-b);display:flex;align-items:center;justify-content:center;">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1" opacity=".4"/></svg>
-        </div>
-        <div style="font-size:48px;font-weight:700;letter-spacing:-.03em;color:var(--t1);line-height:1.1;">Thank you</div>
-        <div style="font-size:16px;color:var(--t2);max-width:480px;line-height:1.6;">Questions, feedback, and open items welcome.</div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:8px;">
-          <div class="pill pill-blue">Spec: product-spec-repeater-in-repeater.md</div>
-          <div class="pill" style="background:var(--sur2);border:1px solid var(--bd);color:var(--t2);">Phase 1 · All flows in scope</div>
-        </div>
+    <div class="content-slide" style="background: radial-gradient(ellipse 60% 50% at 50% 60%, rgba(59,130,246,.05) 0%, transparent 70%);">
+      <div style="display:flex;flex-direction:column;align-items:center;text-align:center;">
+        <div style="font-size:52px;font-weight:700;letter-spacing:-.03em;color:var(--t1);line-height:1;">Thank you</div>
       </div>
     </div>
   </div>
 
 </div><!-- /deck -->
 
-<!-- ── NAV ARROWS ──────────────────────────────────────────────── -->
-<button class="nav-arrow prev disabled" id="prevBtn" aria-label="Previous slide" onclick="navigate(-1)">
-  <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
-</button>
-<button class="nav-arrow next" id="nextBtn" aria-label="Next slide" onclick="navigate(1)">
-  <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
-</button>
-
-<!-- ── PROGRESS DOTS ─────────────────────────────────────────────── -->
-<div class="progress" id="progress"></div>
-
-<!-- ── SLIDE COUNT ───────────────────────────────────────────────── -->
-<div class="slide-count" id="slideCount">1 / 14</div>
+<!-- ── FOOTER NAV ──────────────────────────────────────────────── -->
+<div class="nav-footer">
+  <button class="nav-arrow disabled" id="prevBtn" aria-label="Previous slide" onclick="navigate(-1)">
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+  </button>
+  <div class="progress" id="progress"></div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <button class="nav-arrow" id="reloadBtn" aria-label="Reload prototype" title="Reload prototype" style="display:none;" onclick="reloadIframe()">
+      <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd"/></svg>
+    </button>
+    <div class="slide-count" id="slideCount">1 / 11</div>
+    <button class="nav-arrow" id="nextBtn" aria-label="Next slide" onclick="navigate(1)">
+      <svg width="16" height="16" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/></svg>
+    </button>
+  </div>
+</div>
 
 <script>
-const TOTAL = 14;
+const TOTAL = 11;
 let current = 0;
 
-const deck    = document.getElementById('deck');
-const slides  = Array.from(deck.querySelectorAll('.slide'));
-const prevBtn = document.getElementById('prevBtn');
-const nextBtn = document.getElementById('nextBtn');
-const prog    = document.getElementById('progress');
-const counter = document.getElementById('slideCount');
+const deck       = document.getElementById('deck');
+const slides     = Array.from(deck.querySelectorAll('.slide'));
+const prevBtn    = document.getElementById('prevBtn');
+const nextBtn    = document.getElementById('nextBtn');
+const prog       = document.getElementById('progress');
+const counter    = document.getElementById('slideCount');
+const reloadBtn  = document.getElementById('reloadBtn');
+
+function reloadIframe() {
+  const iframe = slides[current].querySelector('iframe');
+  if (!iframe) return;
+  const src = iframe.src;
+  iframe.src = '';
+  iframe.src = src;
+}
+
+function updateReloadBtn() {
+  const hasIframe = !!slides[current].querySelector('iframe');
+  reloadBtn.style.display = hasIframe ? '' : 'none';
+}
+
+// init reload button state for slide 0
+updateReloadBtn();
 
 // build dots
 slides.forEach((_, i) => {
@@ -953,6 +929,8 @@ function goTo(n) {
   nextBtn.classList.toggle('disabled', current === TOTAL - 1);
   // counter
   counter.textContent = `${current + 1} / ${TOTAL}`;
+  // reload button
+  updateReloadBtn();
 }
 
 function navigate(dir) { goTo(current + dir); }

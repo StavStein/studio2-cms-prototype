@@ -805,6 +805,14 @@
         box-shadow: 0 4px 16px #0003;
         opacity: 0.9;
         white-space: nowrap;
+        transition: background .12s, color .12s;
+      }
+      .add-el-drag-ghost.blocked {
+        background: #ef4444;
+        cursor: not-allowed;
+      }
+      .add-el-drag-ghost.blocked::before {
+        content: '⛔ ';
       }
       .canvas-drop-indicator {
         position: absolute;
@@ -887,7 +895,8 @@
       .rep-item.rir-drop-blocked {
         outline: 2px solid #ef4444;
         outline-offset: -2px;
-        background: color-mix(in srgb, #ef4444 6%, transparent);
+        background: color-mix(in srgb, #ef4444 8%, transparent);
+        cursor: not-allowed;
       }
       .el-drag-ghost {
         position: fixed;
@@ -914,6 +923,28 @@
         text-decoration: underline;
         cursor: pointer;
         font-weight: 600;
+      }
+      .toast-dismiss {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 10px;
+        flex-shrink: 0;
+        width: 18px;
+        height: 18px;
+        border-radius: 4px;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        color: var(--t3);
+        font-size: 14px;
+        line-height: 1;
+        padding: 0;
+        transition: background .12s, color .12s;
+      }
+      .toast-dismiss:hover {
+        background: var(--b2);
+        color: var(--t1);
       }
       .ctx-menu {
         display: none;
@@ -3529,6 +3560,15 @@
       .c-repeater.sel.bound {
         box-shadow: 0 0 0 3px #e8439320;
       }
+      /* On-repeater repeaters keep .bound after detach so inner items stay visible —
+         but the magenta stroke must drop until they're reconnected to data. */
+      .c-repeater.bound.unbound-stroke {
+        border-color: var(--b2);
+      }
+      .c-repeater.sel.bound.unbound-stroke {
+        border-color: var(--acc);
+        box-shadow: 0 0 0 3px var(--acc-d);
+      }
       .c-repeater .c-repeater {
         border-color: transparent;
         background: transparent;
@@ -4908,10 +4948,8 @@
         display: flex;
         align-items: center;
         gap: 6px;
-        padding: 6px 8px;
-        border-radius: 6px;
-        border: 1px solid var(--b1);
-        background: color-mix(in srgb, var(--b1) 55%, transparent);
+        padding: 6px 8px 2px;
+        border-top: 1px solid var(--b1);
         font-size: 10px;
         color: var(--t3);
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
@@ -22915,7 +22953,7 @@
               </div>
               <span style="display:inline-block;background:#7c3aed18;color:#7c3aed;font-size:9px;padding:1px 7px;border-radius:3px;font-weight:700">M1</span>
             </div>
-            <div class="s-body"></div>
+            <div class="s-body" style="min-height:120px;padding-bottom:24px"></div>
           </div>
 
           <!-- Section M2 -->
@@ -22927,7 +22965,7 @@
               </div>
               <span style="display:inline-block;background:#0ea5e918;color:#0369a1;font-size:9px;padding:1px 7px;border-radius:3px;font-weight:700">M2</span>
             </div>
-            <div class="s-body"></div>
+            <div class="s-body" style="min-height:120px;padding-bottom:24px"></div>
           </div>
 
         </div>
@@ -26986,6 +27024,34 @@
               description:
                 'Maximum number of dishes shown per category. Truncates display only — all data remains fetched.',
             },
+            {
+              key: 'filterAllergens',
+              label: 'Allergens filter',
+              input: 'select',
+              nested: true,
+              depth: 3,
+              nestedType: 'filter',
+              nestedLabel: 'Allergens',
+              nestedPath: 'items → dishes → allergens',
+              options: ['All allergens', 'Common only', 'Severe only'],
+              default: 'All allergens',
+              description:
+                'Show only allergens matching this condition. Runs client-side — all data is still fetched from the CMS.',
+            },
+            {
+              key: 'limitAllergens',
+              label: 'Allergens per dish',
+              input: 'select',
+              nested: true,
+              depth: 3,
+              nestedType: 'limit',
+              nestedLabel: 'Allergens',
+              nestedPath: 'items → dishes → allergens',
+              options: ['All', 'Top 1', 'Top 2', 'Top 3'],
+              default: 'All',
+              description:
+                'Maximum number of allergens shown per dish. Truncates display only — all data remains fetched.',
+            },
           ],
         },
 
@@ -27175,6 +27241,52 @@
                 { name: 'tags', type: 'array', sample: '["Vegetarian","GF"]', itemFields: [
                   { name: 'label', type: 'string', sample: '"Vegetarian"' },
                 ]},
+                {
+                  name: 'allergens',
+                  type: 'multiReference',
+                  referencedCollection: 'cms-rir-allergens',
+                  sample: '[{allergenName, allergenIcon}]',
+                  description: 'Allergens linked to this dish (multi-reference)',
+                  refFields: [
+                    { name: 'allergenName', type: 'string', sample: '"Gluten"' },
+                    { name: 'allergenIcon', type: 'string', sample: '"🌾"' },
+                  ],
+                },
+                ...CMS_ITEM_SYSTEM_FIELDS,
+              ],
+            },
+            ...CMS_COLLECTION_FIELDS,
+          ],
+          itemActions: CMS_ITEM_ACTIONS,
+          contextActions: CMS_CONTEXT_ACTIONS,
+          metadata: [],
+          config: [],
+        },
+        {
+          id: 'cms-rir-allergens',
+          name: 'Allergens',
+          icon: '⚠️',
+          type: 'list',
+          source: 'CMS',
+          group: 'CMS',
+          itemCount: 8,
+          description: 'Allergen labels — used as a multi-reference field on Dishes in M2.',
+          fields: [
+            ...CMS_LIST_STATES,
+            {
+              name: 'items',
+              type: 'array',
+              sample: '[{allergenName, allergenIcon}]',
+              itemFields: [
+                { name: 'allergenName', type: 'string', sample: '"Gluten"' },
+                { name: 'allergenIcon', type: 'string', sample: '"🌾"' },
+                {
+                  name: 'dish',
+                  type: 'reference',
+                  referencedCollection: 'cms-rir-dishes',
+                  sample: '[Dish ref]',
+                  description: 'Reference to parent dish',
+                },
                 ...CMS_ITEM_SYSTEM_FIELDS,
               ],
             },
@@ -31034,6 +31146,7 @@
           section: 'sec-opta-multi-m1',
           isRepeater: true,
           contextModel: 'on-repeater',
+          readOnlyItemFields: true,
           props: [
             { k: 'Items', t: 'list' },
             { k: 'Visible', t: 'boolean' },
@@ -31125,6 +31238,7 @@
           section: 'sec-opta-multi-m2',
           isRepeater: true,
           contextModel: 'on-repeater',
+          readOnlyItemFields: true,
           props: [
             { k: 'Items', t: 'list' },
             { k: 'Visible', t: 'boolean' },
@@ -36121,15 +36235,17 @@
           if (isConnected) html += `<div class="action-bar-text" id="ab-sort-filter-btn" onclick="actionSortFilter()">Sort &amp; Filter</div>`;
           html += `<div class="action-bar-text" onclick="actionDesign()">Change Layout</div>`;
           html += '<div class="action-bar-sep"></div>';
-          html += `<div class="action-bar-icon" title="Fill">${ACTION_BAR_ICONS.fill}</div>`;
-          html += `<div class="action-bar-icon" title="Rows layout">${ACTION_BAR_ICONS.rows}</div>`;
-          html += `<div class="action-bar-icon" title="Frame">${ACTION_BAR_ICONS.frame}</div>`;
-          html += `<div class="action-bar-icon" title="Box">${ACTION_BAR_ICONS.box}</div>`;
-          html += `<div class="action-bar-icon" title="Columns layout">${ACTION_BAR_ICONS.columns}</div>`;
-          html += `<div class="action-bar-icon" title="Align">${ACTION_BAR_ICONS.alignLeft}</div>`;
-          html += '<div class="action-bar-sep"></div>';
-          html += `<div class="action-bar-icon" title="Edit">${ACTION_BAR_ICONS.edit}</div>`;
-          html += `<div class="action-bar-icon" title="Link">${ACTION_BAR_ICONS.link}</div>`;
+          if (isConnected) {
+            html += `<div class="action-bar-icon" title="Fill">${ACTION_BAR_ICONS.fill}</div>`;
+            html += `<div class="action-bar-icon" title="Rows layout">${ACTION_BAR_ICONS.rows}</div>`;
+            html += `<div class="action-bar-icon" title="Frame">${ACTION_BAR_ICONS.frame}</div>`;
+            html += `<div class="action-bar-icon" title="Box">${ACTION_BAR_ICONS.box}</div>`;
+            html += `<div class="action-bar-icon" title="Columns layout">${ACTION_BAR_ICONS.columns}</div>`;
+            html += `<div class="action-bar-icon" title="Align">${ACTION_BAR_ICONS.alignLeft}</div>`;
+            html += '<div class="action-bar-sep"></div>';
+            html += `<div class="action-bar-icon" title="Edit">${ACTION_BAR_ICONS.edit}</div>`;
+            html += `<div class="action-bar-icon" title="Link">${ACTION_BAR_ICONS.link}</div>`;
+          }
           html += `<div class="action-bar-icon" onclick="actionSettings()" title="Settings">${ACTION_BAR_ICONS.settings}</div>`;
           html += '<div class="action-bar-sep"></div>';
           html += `<div class="action-bar-icon" title="Help">${ACTION_BAR_ICONS.help}</div>`;
@@ -37532,32 +37648,30 @@
           </div>`
             : '';
 
-          if (isNestedField) {
+          const isM2Inner = !!def._rir_m2_catIdx;
+          if (isNestedField || isM2Inner) {
+            const _limitCfg = ctx.config?.find(c => c.nestedType === 'limit' && c.nestedPath?.split(' → ').pop() === b.fieldName);
+            const _nestedDepth = _limitCfg?.depth || 2;
+            const _nestedKey = isM2Inner ? 'pageSize' : 'nestedPageSize_' + _nestedDepth;
+            if (!S.cfgValues) S.cfgValues = {};
+            if (!S.cfgValues[b.ctxId]) S.cfgValues[b.ctxId] = {};
+            if (!S.cfgValues[b.ctxId][_nestedKey]) S.cfgValues[b.ctxId][_nestedKey] = isM2Inner ? 25 : 10;
+            const nestedLimit = parseInt(S.cfgValues[b.ctxId][_nestedKey], 10);
+            p.showLimit = true;
+            p.limit = nestedLimit;
+            p.mode = 'none';
+            const _accState = isM2Inner ? '{}' : JSON.stringify({1:false,[_nestedDepth]:true}).replace(/"/g,"'");
             ctxSummaryHtml = `<div class="rp-cat ${S.openCats.repconfig ? 'open' : ''}" id="rp-cat-repconfig">
         <div class="rp-cat-head" onclick="toggleCat('repconfig')">
           <span class="rp-cat-chevron">›</span>
-          <span class="rp-cat-title">Pagination, Filter & Sort</span>
+          <span class="rp-cat-title">Items per load</span>
         </div>
         <div class="rp-cat-body">
-          <div style="padding:10px 12px;background:var(--sur2);border:1px solid var(--b1);border-radius:8px;margin-bottom:10px">
-            <div style="font-size:11px;color:var(--t2);line-height:1.6">This repeater is bound to a nested array, so it shows items as they come from the parent — no sort or filter available here.</div>
-            <div style="font-size:11px;color:var(--t2);line-height:1.6;margin-top:6px">Need to sort or filter this list? <b>Add a separate context</b> for the referenced collection — that gives you full control.</div>
-            <div style="margin-top:8px"><span style="font-size:11px;color:var(--acc);cursor:pointer;font-weight:500" onclick="toast('In the full product, this would open the Add Context flow for the referenced collection.')">+ Add context for full control</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0">
+            <span style="font-size:11px;color:var(--t2)">Showing up to</span>
+            <span style="font-size:13px;color:var(--t1);font-weight:700">${nestedLimit} <span style="font-size:11px;font-weight:400;color:var(--t2)">${isM2Inner ? 'items per repeater' : 'items per parent row'}</span></span>
           </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0">
-            <span style="font-size:11px;color:var(--t2);display:flex;align-items:center;gap:4px">Show limited number of items <span style="font-size:10px;color:var(--t3);cursor:help" title="Limit how many items from this nested list are shown on each parent item.">ⓘ</span></span>
-            <div class="tog ${p.showLimit ? 'on' : ''}" onclick="toggleRepShowLimit('${repId}')" style="transform:scale(.8)"></div>
-          </div>
-          ${
-            p.showLimit
-              ? `
-          <div style="margin-top:4px;display:flex;align-items:center;gap:10px;padding:2px 0">
-            <input type="range" min="1" max="100" value="${p.limit}" oninput="setRepLimit('${repId}',this.value)" style="flex:1;accent-color:var(--acc);height:4px">
-            <input type="number" min="1" max="100" value="${p.limit}" onchange="setRepLimit('${repId}',this.value)" style="width:52px;padding:4px 6px;border:1px solid var(--b1);border-radius:6px;font-size:12px;font-family:'SF Mono',ui-monospace,Menlo,Consolas,monospace;text-align:center;background:var(--bg);color:var(--t1)">
-          </div>`
-              : ''
-          }
-          ${p.showLimit ? `<div style="display:flex;justify-content:space-between;padding:4px 0;margin-top:6px;font-size:11px"><span style="color:var(--t3)">Display limit</span><span style="color:var(--t1);font-weight:600">${p.limit} items</span></div>` : ''}
+          <div style="margin-top:4px"><span style="font-size:11px;color:var(--acc);cursor:pointer;font-weight:500" onclick="S.ctxSettingsView='${b.ctxId}';if(!S.cfgAccordion)S.cfgAccordion={};S.cfgAccordion['${b.ctxId}']=${_accState};renderBody()">Edit in ${ctx.name} configuration →</span></div>
         </div>
       </div>`;
           } else {
@@ -37574,25 +37688,23 @@
             </span>
             <div class="tog ${p.mode === 'scroll' ? 'on' : ''}" onclick="setRepPagMode('${repId}','${p.mode === 'scroll' ? 'none' : 'scroll'}')" style="transform:scale(.8)"></div>
           </div>
-          ${p.mode === 'scroll' ? `
           <div style="margin-top:8px">
             <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 0">
-              <span style="font-size:11px;color:var(--t2);display:inline-flex;align-items:center;gap:5px">Items per load <span class="cfg-info">?<span class="cfg-info-tip">How many items load at a time as visitors scroll. Use a lower number for faster loading, or a higher number to load more items at once.</span></span></span>
+              <span style="font-size:11px;color:var(--t2);display:inline-flex;align-items:center;gap:5px">Items per load <span class="cfg-info">?<span class="cfg-info-tip">${p.mode === 'scroll' ? 'How many items load at a time as visitors scroll. Use a lower number for faster loading, or a higher number to load more items at once.' : 'How many items the repeater displays. With pagination off, all of these items load at once.'}</span></span></span>
               <span style="font-size:12px;font-family:'SF Mono',ui-monospace,Menlo,Consolas,monospace;color:var(--t1);font-weight:600">${S.cfgValues?.[b.ctxId]?.pageSize || '25'}</span>
             </div>
             <div style="margin-top:4px"><span style="font-size:11px;color:var(--acc);cursor:pointer;text-decoration:underline" onclick="S.ctxSettingsView='${b.ctxId}';renderBody()">Edit in ${resolveCtxName(ctx.id)} configuration →</span></div>
-          </div>` : `
-          <div style="margin-top:8px;padding:8px 10px;background:var(--sur2);border:1px solid var(--b1);border-radius:8px">
-            <div style="font-size:11px;color:var(--t2);line-height:1.6">Without pagination, all items load at once. To control how many items are shown, set the item limit in the <span style="color:var(--acc);cursor:pointer;font-weight:500;text-decoration:underline" onclick="S.ctxSettingsView='${b.ctxId}';renderBody()">context configuration →</span></div>
-          </div>`}
+          </div>
         </div>
       </div>`;
           }
         }
 
-        // Build "Suggested fields" section — only when connected, and not for auto-fill repeaters
+        // Build "Suggested fields" section — only when connected, not for auto-fill repeaters, not for M2 RiR repeaters, not for nested sub-array repeaters, not on the Repeater-in-Repeater page
+        const _isNestedBinding = b && ctx && !ctx.fields.some(f => f.name === b.fieldName && (f.type === 'array' || f.type === 'multiReference'));
+        const _isRirPage = def.section === 'sec-rir' || def.section === 'sec-rir-m2';
         let suggestedFieldsHtml = '';
-        if (b && ctx && !def.autoFill) {
+        if (b && ctx && !def.autoFill && !def._rir_m2 && !def._rir_m2_allergens && !_isNestedBinding && !_isRirPage) {
           if (isReadOnlyItemFieldsRepeater(repId)) {
             suggestedFieldsHtml = `<div style="padding:10px 0 4px">${renderAiFieldHelpCta(repId)}</div>`;
           } else {
@@ -37713,13 +37825,7 @@
           <span>✓</span> Context promoted to section — UoU controls can access it
         </div>`
               : '';
-        const disconnectedItemsNote = !b
-          ? `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;margin-top:8px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px">
-          <span style="font-size:14px;flex-shrink:0">⚠️</span>
-          <div style="font-size:10px;color:#856404;line-height:1.4;flex:1">This repeater is <b>not showing data yet</b>. Connect it to a list to display real items.</div>
-          <span style="flex-shrink:0;padding:4px 10px;background:#856404;color:#fff;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap" onclick="openInspectorBindFlow(event,'${repId}')">Connect to data</span>
-        </div>`
-          : '';
+        const disconnectedItemsNote = '';
 
         return `<div class="rp-cat ${S.openCats.context ? 'open' : ''}" id="rp-cat-context">
     <div class="rp-cat-head" onclick="toggleCat('context')">
@@ -37735,7 +37841,7 @@
     </div>
     <div class="rp-cat-body">
       <div class="prop-wrap">
-        <div class="prop-key" style="display:flex;align-items:center;gap:4px">List <span style="font-size:10px;color:var(--t3);cursor:help;position:relative" onmouseenter="this.querySelector('.list-tip').style.display='block'" onmouseleave="this.querySelector('.list-tip').style.display='none'">ⓘ<div class="list-tip" style="display:none;position:absolute;left:0;top:16px;width:200px;padding:8px 10px;background:var(--t1);color:var(--sur);font-size:10px;line-height:1.4;border-radius:6px;z-index:100;font-weight:400;pointer-events:none;box-shadow:0 4px 12px #0003">Connect to a data source — each row in the repeater will show one item from the connected list.</div></span></div>
+        <div class="prop-key" style="display:flex;align-items:center;gap:4px">Repeater List <span style="font-size:10px;color:var(--t3);cursor:help;position:relative" onmouseenter="this.querySelector('.list-tip').style.display='block'" onmouseleave="this.querySelector('.list-tip').style.display='none'">ⓘ<div class="list-tip" style="display:none;position:absolute;left:0;top:16px;width:200px;padding:8px 10px;background:var(--t1);color:var(--sur);font-size:10px;line-height:1.4;border-radius:6px;z-index:100;font-weight:400;pointer-events:none;box-shadow:0 4px 12px #0003">Connect to a data source — each row in the repeater will show one item from the connected list.</div></span></div>
         <div class="prop-row ${b ? 'bound' : ''} ${isActiveDd ? 'active-bind' : ''}">
           <div class="prop-main">
             <div class="prop-val">
@@ -37743,7 +37849,7 @@
                 b && ctx
                   ? `<div class="prop-bound-chip prop-bound-detail" style="display:flex">
                     <span class="prop-bound-ctx" onclick="navToSectionCtx('${repId}',event)">${ctx.icon} ${resolveCtxName(ctx.id)} (source)</span>
-                    <span class="prop-bound-field">List<span class="chip-x" onclick="unbind('${repId}','Items',event)">✕</span></span>
+                    <span class="prop-bound-field">${formatRepeaterListLabel(repId, b)}<span class="chip-x" onclick="unbind('${repId}','Items',event)">✕</span></span>
                   </div>`
                   : `<span style="font-size:11px;color:var(--t3);font-style:italic">Connect to an array field →</span>`
               }
@@ -37755,7 +37861,6 @@
             </svg>
           </div>
         </div>
-        ${b && ctx ? `<div style="margin-top:6px;font-size:11px;color:var(--t2);line-height:1.5">Want to sort/filter items? Go to ${resolveCtxName(ctx.id)} <span style="color:var(--acc);cursor:pointer;text-decoration:underline;font-weight:500" onclick="S.ctxSettingsView='${ctx.id}';renderBody()">configuration →</span></div>` : ''}
       </div>
       ${disconnectedItemsNote}
       ${b && ctx && def.itemsConfigMode ? renderItemsParams(repId, b, ctx) : ''}
@@ -38757,40 +38862,64 @@
         const isImage = elType === 'image';
         const ts = Date.now();
         const newId = repId + '-plain-' + elType + '-' + ts;
-        const items = repDom.querySelectorAll('.rep-item');
-        items.forEach((item, idx) => {
-          const elId = idx === 0 ? newId : newId + '-' + idx;
-          const el = document.createElement('div');
-          el.id = elId;
-          el.className = isImage ? 'c-el c-el-img added-field' : 'c-el c-el-text added-field';
-          el.setAttribute('onclick', `selEl(event,'${elId}')`);
-          el.style.cssText = 'margin:2px 0;';
-          if (isImage) {
-            el.innerHTML = `
-              <div class="c-el-overlay"></div>
-              <div class="el-tags"><div class="el-type-tag">Image</div></div>
-              <img id="v-${elId}" src="" style="width:100%;max-height:100px;object-fit:cover;border-radius:4px;background:var(--sur2);display:block" alt="image"/>`;
-          } else {
-            el.innerHTML = `
-              <div class="c-el-overlay"></div>
-              <div class="el-tags"><div class="el-type-tag">Text</div></div>
-              <span class="val" id="v-${elId}">Text</span>`;
-          }
-          item.appendChild(el);
-          EL_DEFS[elId] = {
-            name: isImage ? 'Image' : 'Text',
-            type: isImage ? 'Image' : 'Text',
-            section: EL_DEFS[repId]?.section,
-            repTemplate: newId,
-            props: [
-              {
-                k: 'Value',
-                t: isImage ? 'image' : 'string',
-                placeholder: isImage ? 'Image' : 'Text',
-              },
-            ],
-          };
+
+        // Collect the target repeater plus any sibling repeaters nested at the same level
+        // (e.g. all Dishes repeaters across category items of a parent repeater).
+        const siblingRepIds = [repId];
+        const parentRepItem = repDom.closest('.rep-item');
+        const parentRepeater = parentRepItem ? parentRepItem.closest('.c-repeater') : null;
+        if (parentRepeater) {
+          const parentIc = getRepContainer(parentRepeater);
+          const parentItems = parentIc
+            ? [...parentIc.querySelectorAll(':scope > .rep-item')]
+            : [...parentRepeater.querySelectorAll(':scope > .rep-item')];
+          parentItems.forEach(pItem => {
+            pItem.querySelectorAll(':scope > .c-repeater').forEach(sibRep => {
+              if (sibRep.id && sibRep.id !== repId && EL_DEFS[sibRep.id]?.isRepeater) {
+                siblingRepIds.push(sibRep.id);
+              }
+            });
+          });
+        }
+
+        siblingRepIds.forEach((rId, repIdx) => {
+          const rDom = document.getElementById(rId);
+          if (!rDom) return;
+          const ic = getRepContainer(rDom);
+          const items = ic
+            ? [...ic.querySelectorAll(':scope > .rep-item')]
+            : [...rDom.querySelectorAll('.rep-item')];
+          items.forEach((item, idx) => {
+            const elId = repIdx === 0 && idx === 0
+              ? newId
+              : newId + '-' + repIdx + '-' + idx;
+            const el = document.createElement('div');
+            el.id = elId;
+            el.className = isImage ? 'c-el c-el-img added-field' : 'c-el c-el-text added-field';
+            el.setAttribute('onclick', `selEl(event,'${elId}')`);
+            el.style.cssText = 'margin:2px 0;';
+            if (isImage) {
+              el.innerHTML = `
+                <div class="c-el-overlay"></div>
+                <div class="el-tags"><div class="el-type-tag">Image</div></div>
+                <img id="v-${elId}" src="" style="width:100%;max-height:100px;object-fit:cover;border-radius:4px;background:var(--sur2);display:block" alt="image"/>`;
+            } else {
+              el.innerHTML = `
+                <div class="c-el-overlay"></div>
+                <div class="el-tags"><div class="el-type-tag">Text</div></div>
+                <span class="val" id="v-${elId}">Text</span>`;
+            }
+            item.appendChild(el);
+            EL_DEFS[elId] = {
+              name: isImage ? 'Image' : 'Text',
+              type: isImage ? 'Image' : 'Text',
+              section: EL_DEFS[rId]?.section,
+              repTemplate: newId,
+              props: [{ k: 'Value', t: isImage ? 'image' : 'string', placeholder: isImage ? 'Image' : 'Text' }],
+            };
+          });
         });
+
         // Select the first added element and open inspector
         S.sel = newId;
         S.ctxSettingsView = null;
@@ -38942,31 +39071,27 @@
               : '';
 
             if (isNestedField) {
+              const _limitCfg = ctx.config?.find(c => c.nestedType === 'limit' && c.nestedPath?.split(' → ').pop() === b.fieldName);
+              const _nestedDepth = _limitCfg?.depth || 2;
+              const _nestedKey = 'nestedPageSize_' + _nestedDepth;
+              if (!S.cfgValues) S.cfgValues = {};
+              if (!S.cfgValues[b.ctxId]) S.cfgValues[b.ctxId] = {};
+              if (!S.cfgValues[b.ctxId][_nestedKey]) S.cfgValues[b.ctxId][_nestedKey] = 10;
+              const nestedLimit = parseInt(S.cfgValues[b.ctxId][_nestedKey], 10);
+              p.showLimit = true;
+              p.limit = nestedLimit;
+              const _accState = JSON.stringify({1:false,[_nestedDepth]:true}).replace(/"/g,"'");
               ctxSummaryHtml = `<div class="rp-cat ${S.openCats.repconfig ? 'open' : ''}" id="rp-cat-repconfig">
           <div class="rp-cat-head" onclick="toggleCat('repconfig')">
             <span class="rp-cat-chevron">›</span>
-            <span class="rp-cat-title">Pagination, Filter & Sort</span>
+            <span class="rp-cat-title">Item limit</span>
           </div>
           <div class="rp-cat-body">
-            <div style="padding:10px 12px;background:var(--sur2);border:1px solid var(--b1);border-radius:8px;margin-bottom:10px">
-              <div style="font-size:11px;color:var(--t2);line-height:1.6">This repeater is bound to a nested array, so it shows items as they come from the parent — no sort or filter available here.</div>
-            <div style="font-size:11px;color:var(--t2);line-height:1.6;margin-top:6px">Need to sort or filter this list? <b>Add a separate context</b> for the referenced collection — that gives you full control.</div>
-            <div style="margin-top:8px"><span style="font-size:11px;color:var(--acc);cursor:pointer;font-weight:500" onclick="toast('In the full product, this would open the Add Context flow for the referenced collection.')">+ Add context for full control</span></div>
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 0">
+              <span style="font-size:11px;color:var(--t2)">Showing up to</span>
+              <span style="font-size:13px;color:var(--t1);font-weight:700">${nestedLimit} <span style="font-size:11px;font-weight:400;color:var(--t2)">items per parent row</span></span>
             </div>
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0">
-              <span style="font-size:11px;color:var(--t2);display:flex;align-items:center;gap:4px">Show limited number of items <span style="font-size:10px;color:var(--t3);cursor:help" title="Limit how many items from this nested list are shown on each parent item.">ⓘ</span></span>
-              <div class="tog ${p.showLimit ? 'on' : ''}" onclick="toggleRepShowLimit('${S.sel}')" style="transform:scale(.8)"></div>
-            </div>
-            ${
-              p.showLimit
-                ? `
-            <div style="margin-top:4px;display:flex;align-items:center;gap:10px;padding:2px 0">
-              <input type="range" min="1" max="100" value="${p.limit}" oninput="setRepLimit('${S.sel}',this.value)" style="flex:1;accent-color:var(--acc);height:4px">
-              <input type="number" min="1" max="100" value="${p.limit}" onchange="setRepLimit('${S.sel}',this.value)" style="width:52px;padding:4px 6px;border:1px solid var(--b1);border-radius:6px;font-size:12px;font-family:'SF Mono',ui-monospace,Menlo,Consolas,monospace;text-align:center;background:var(--bg);color:var(--t1)">
-            </div>`
-                : ''
-            }
-            ${p.showLimit ? `<div style="display:flex;justify-content:space-between;padding:4px 0;margin-top:6px;font-size:11px"><span style="color:var(--t3)">Display limit</span><span style="color:var(--t1);font-weight:600">${p.limit} items</span></div>` : ''}
+            <div style="margin-top:4px"><span style="font-size:11px;color:var(--acc);cursor:pointer;font-weight:500" onclick="S.ctxSettingsView='${b.ctxId}';if(!S.cfgAccordion)S.cfgAccordion={};S.cfgAccordion['${b.ctxId}']=${_accState};renderBody()">Edit in ${ctx.name} configuration →</span></div>
           </div>
         </div>`;
             } else {
@@ -39016,7 +39141,7 @@
       </div>
       <div class="rp-cat-body">
         <div class="prop-wrap">
-          <div class="prop-key" style="display:flex;align-items:center;gap:4px">List <span style="font-size:10px;color:var(--t3);cursor:help;position:relative" onmouseenter="this.querySelector('.list-tip').style.display='block'" onmouseleave="this.querySelector('.list-tip').style.display='none'">ⓘ<div class="list-tip" style="display:none;position:absolute;left:0;top:16px;width:200px;padding:8px 10px;background:var(--t1);color:var(--sur);font-size:10px;line-height:1.4;border-radius:6px;z-index:100;font-weight:400;pointer-events:none;box-shadow:0 4px 12px #0003">Connect to a data source — each row in the repeater will show one item from the connected list.</div></span></div>
+          <div class="prop-key" style="display:flex;align-items:center;gap:4px">Repeater List <span style="font-size:10px;color:var(--t3);cursor:help;position:relative" onmouseenter="this.querySelector('.list-tip').style.display='block'" onmouseleave="this.querySelector('.list-tip').style.display='none'">ⓘ<div class="list-tip" style="display:none;position:absolute;left:0;top:16px;width:200px;padding:8px 10px;background:var(--t1);color:var(--sur);font-size:10px;line-height:1.4;border-radius:6px;z-index:100;font-weight:400;pointer-events:none;box-shadow:0 4px 12px #0003">Connect to a data source — each row in the repeater will show one item from the connected list.</div></span></div>
           <div class="prop-row ${b ? 'bound' : ''} ${isActiveDd ? 'active-bind' : ''}">
             <div class="prop-main">
               <div class="prop-val">
@@ -39024,7 +39149,7 @@
                   b && ctx
                     ? `<div class="prop-bound-chip prop-bound-detail" style="display:flex">
                       <span class="prop-bound-ctx" onclick="navToSectionCtx('${S.sel}',event)">${ctx.icon} ${resolveCtxName(ctx.id)} (source)</span>
-                      <span class="prop-bound-field">List<span class="chip-x" onclick="unbind('${S.sel}','Items',event)">✕</span></span>
+                      <span class="prop-bound-field">${formatRepeaterListLabel(S.sel, b)}<span class="chip-x" onclick="unbind('${S.sel}','Items',event)">✕</span></span>
                     </div>`
                     : `<span style="font-size:11px;color:var(--t3);font-style:italic">Connect to an array field →</span>`
                 }
@@ -39036,7 +39161,6 @@
               </svg>
             </div>
           </div>
-          ${b && ctx ? `<div style="margin-top:6px;font-size:11px;color:var(--t2);line-height:1.5">Want to sort/filter items? Go to ${resolveCtxName(ctx.id)} <span style="color:var(--acc);cursor:pointer;text-decoration:underline;font-weight:500" onclick="S.ctxSettingsView='${ctx.id}';renderBody()">configuration →</span></div>` : ''}
           ${emptyRepSettingsHtml}
         </div>
       </div>
@@ -39405,11 +39529,6 @@
           const repBound = parentRepId ? !!S.bindings[parentRepId + '|Items'] : false;
           if (repBound) {
             templateNote = `<div style="font-size:10px;color:var(--acc);font-family:'SF Mono',ui-monospace,Menlo,Consolas,monospace;padding:0 0 7px;opacity:.8">↳ Binding applies to all items</div>`;
-          } else {
-            templateNote = `<div style="display:flex;align-items:center;gap:6px;padding:8px 10px;margin-bottom:8px;background:#fff3cd;border:1px solid #ffc107;border-radius:8px">
-        <span style="font-size:14px">⚠️</span>
-        <div style="font-size:10px;color:#856404;line-height:1.4"><b>Repeater Is Disconnected</b><br>This repeater is not connected to data yet. Connect it to a list so each item can show different content.</div>
-      </div>`;
           }
         }
 
@@ -39594,6 +39713,43 @@
         }
       }
 
+      // Returns the closest ancestor repeater that has no |Items binding, or null.
+      // Used to gate property binding inside an unconnected repeater.
+      function getUnboundParentRepeaterForEl(elId) {
+        const dom = document.getElementById(elId);
+        if (!dom) return null;
+        const parentRep = dom.closest('.c-repeater');
+        if (!parentRep || parentRep.id === elId) return null;
+        if (S.bindings[parentRep.id + '|Items']) return null;
+        return parentRep.id;
+      }
+
+      function connectParentRepeater(repId, e) {
+        if (e && e.stopPropagation) e.stopPropagation();
+        S.sel = repId;
+        S.tab = 'settings';
+        updateSelectionVisual(repId);
+        renderBody();
+        // Open the Items source picker for the repeater
+        setTimeout(() => openDd({ stopPropagation: () => {}, currentTarget: document.getElementById(repId) }, repId, 'Items'), 0);
+      }
+
+      // Render a disabled bind icon whose tooltip contains the explanation
+      // AND a "Connect repeater" CTA. Shown when the element lives inside an unconnected repeater.
+      function renderDisabledBindWithConnect(repId) {
+        return `<div class="bind-btn" style="opacity:.5;cursor:not-allowed;position:relative"
+          onmouseenter="this.querySelector('.bb-tip').style.display='block'"
+          onmouseleave="this.querySelector('.bb-tip').style.display='none'">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <circle cx="4.5" cy="3.5" r="2"/><circle cx="11.5" cy="12.5" r="2"/><path d="M4.5 5.5C4.5 9 11.5 7 11.5 10.5"/>
+          </svg>
+          <div class="bb-tip" style="display:none;position:absolute;right:28px;top:50%;transform:translateY(-50%);width:200px;padding:10px;background:var(--t1);color:var(--sur);font-size:10px;line-height:1.5;border-radius:6px;z-index:50;font-weight:400;box-shadow:0 4px 12px #0003;white-space:normal">
+            <div style="margin-bottom:8px">Connect the repeater to data first — fields inside can't bind without a list.</div>
+            <button type="button" onclick="connectParentRepeater('${repId}',event)" style="width:100%;padding:5px 8px;font-size:10px;font-weight:600;border:1px solid var(--sur);background:transparent;color:var(--sur);border-radius:4px;cursor:pointer;font-family:inherit;pointer-events:auto">Connect repeater</button>
+          </div>
+        </div>`;
+      }
+
       /* ── PROP ROW (binding controller) ── */
       function renderPropRow(elId, prop) {
         const bkey = `${elId}|${prop.k}`;
@@ -39671,11 +39827,15 @@
           </div>
         </div>
       </div>
-      <div class="bind-btn ${isBound ? 'bound' : ''}" onclick="openDd(event,'${elId}','${prop.k}')" title="Connect to context">
+      ${
+        !isBound && getUnboundParentRepeaterForEl(elId)
+          ? renderDisabledBindWithConnect(getUnboundParentRepeaterForEl(elId))
+          : `<div class="bind-btn ${isBound ? 'bound' : ''}" onclick="openDd(event,'${elId}','${prop.k}')" title="Connect to context">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
           <circle cx="4.5" cy="3.5" r="2"/><circle cx="11.5" cy="12.5" r="2"/><path d="M4.5 5.5C4.5 9 11.5 7 11.5 10.5"/>
         </svg>
-      </div>
+      </div>`
+      }
     </div>
     ${editSourceHtml}
     ${fnParamsHtml}
@@ -39774,11 +39934,15 @@
           </div>
         </div>
       </div>
-      <div class="bind-btn" onclick="openDd(event,'${elId}','Visible')" title="Connect boolean">
+      ${
+        getUnboundParentRepeaterForEl(elId)
+          ? renderDisabledBindWithConnect(getUnboundParentRepeaterForEl(elId))
+          : `<div class="bind-btn" onclick="openDd(event,'${elId}','Visible')" title="Connect boolean">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
           <circle cx="4.5" cy="3.5" r="2"/><circle cx="11.5" cy="12.5" r="2"/><path d="M4.5 5.5C4.5 9 11.5 7 11.5 10.5"/>
         </svg>
-      </div>
+      </div>`
+      }
     </div>
   </div>`;
       }
@@ -39819,11 +39983,15 @@
           </div>
         </div>
       </div>
-      <div class="bind-btn" onclick="openDd(event,'${elId}','${propKey}')" title="Connect function">
+      ${
+        getUnboundParentRepeaterForEl(elId)
+          ? renderDisabledBindWithConnect(getUnboundParentRepeaterForEl(elId))
+          : `<div class="bind-btn" onclick="openDd(event,'${elId}','${propKey}')" title="Connect function">
         <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
           <circle cx="4.5" cy="3.5" r="2"/><circle cx="11.5" cy="12.5" r="2"/><path d="M4.5 5.5C4.5 9 11.5 7 11.5 10.5"/>
         </svg>
-      </div>
+      </div>`
+      }
     </div>`;
       }
 
@@ -39860,6 +40028,18 @@
     </div>
     <div class="rp-cat-body">${rows}</div>
   </div>`;
+      }
+
+      // Format a repeater's Items binding as "List", "List.Dishes", "List.Dishes.Allergens", etc.
+      // Used by both the hat pill and the inspector "Repeater List" badge so they stay in sync.
+      function formatRepeaterListLabel(elId, binding) {
+        const raw = displayFieldName(elId, binding);
+        if (!raw) return 'List';
+        const cap = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+        const parts = raw.split('.');
+        if (parts[0] === 'items') parts[0] = 'List';
+        for (let i = 1; i < parts.length; i++) parts[i] = cap(parts[i]);
+        return parts.join('.');
       }
 
       function displayFieldName(elId, binding) {
@@ -39938,21 +40118,103 @@
 
         if (def?.isRepeater && propKey === 'Items') {
           const sectionId = def.section;
-          const innerCount = Object.keys(EL_DEFS).filter((cid) => {
-            const cd = EL_DEFS[cid];
-            return (
-              cd.section === sectionId &&
-              cd.repTemplate &&
-              Object.keys(S.bindings).some((bk) => bk.startsWith(cid + '|'))
-            );
-          }).length;
-          const msg =
-            innerCount > 0
-              ? `Disconnecting the repeater from its data source.\n\n${innerCount} inner element binding${innerCount > 1 ? 's' : ''} will be removed — item fields can't stay connected without a data source.`
-              : `Disconnect this repeater from its data source?\n\nAll items will show the same placeholder content.`;
-          showConfirm('Disconnect repeater', msg, 'Disconnect', function () {
+          const outerRepDom = document.getElementById(elId);
+
+          // Detect if this is a nested (inner) repeater, e.g. dishes inside a category
+          const isNested = !!outerRepDom?.parentElement?.closest('.c-repeater');
+
+          // ── Count cascading bindings ──────────────────────────────────────────
+          let outerFieldBindings = 0; // field bindings on outer-rep items (e.g. category name/icon)
+          let innerRepItemsCount = 0; // inner repeater |Items connections (e.g. dishes reps)
+          let innerFieldBindings = 0; // field bindings inside inner-rep items (e.g. dish name/price)
+
+          if (outerRepDom) {
+            // Inner repeaters that have their own |Items binding
+            outerRepDom.querySelectorAll('.c-repeater').forEach((r) => {
+              if (S.bindings[r.id + '|Items']) innerRepItemsCount++;
+            });
+            // Element bindings — split by whether they live in the outer rep or in an inner rep
+            Object.keys(EL_DEFS).forEach((cid) => {
+              const cd = EL_DEFS[cid];
+              if (!cd || cd.section !== sectionId || !cd.repTemplate || cd.isRepeater) return;
+              if (!Object.keys(S.bindings).some((bk) => bk.startsWith(cid + '|'))) return;
+              const domEl = document.getElementById(cid);
+              if (!domEl || !outerRepDom.contains(domEl)) return;
+              const closestRep = domEl.closest('.c-repeater');
+              if (!closestRep) return;
+              if (closestRep.id === elId) outerFieldBindings++;
+              else innerFieldBindings++;
+            });
+          }
+
+          const totalCascade = outerFieldBindings + innerRepItemsCount + innerFieldBindings;
+          const hasInnerReps = innerRepItemsCount > 0;
+
+          // ── Build dialog copy ─────────────────────────────────────────────────
+          let dlgTitle, dlgMsg, dlgWarn;
+
+          if (isNested) {
+            dlgTitle = 'Disconnect dishes repeater';
+            dlgWarn  = false;
+            dlgMsg = 'Inner bindings will be removed. Layout and styling are preserved.';
+          } else if (hasInnerReps) {
+            // Distinguish M1 (sub-array — cascades) from M2 (separate context with filter relationship —
+            // only the auto-filter breaks; inner reps keep their own data and show every row).
+            const parentB = S.bindings[elId + '|Items'];
+            const innerReps = outerRepDom ? [...outerRepDom.querySelectorAll('.c-repeater')] : [];
+            const bothBoundInnerReps = innerReps.filter((ir) => !!S.bindings[ir.id + '|Items']);
+            const m2InnerCount = bothBoundInnerReps.filter((ir) => {
+              const ib = S.bindings[ir.id + '|Items'];
+              if (!ib || !parentB || ib.ctxId === parentB.ctxId) return false;
+              const rel = S.ctxRelationships[ir.id + '::' + ib.ctxId];
+              return !!(rel && rel.linkedTo === parentB.ctxId);
+            }).length;
+            const allM2 = bothBoundInnerReps.length > 0 && m2InnerCount === bothBoundInnerReps.length;
+
+            dlgTitle = 'Disconnect repeater';
+            if (allM2) {
+              dlgWarn = false;
+              dlgMsg  = "The filter that links inner repeaters to this list will be removed. Inner repeaters stay connected to their own data — every item will show the full list. This action can be undone.";
+            } else {
+              dlgWarn = true;
+              dlgMsg  = 'Inner repeaters and field bindings will be removed. Layout and styling are preserved. This action can be undone.';
+            }
+          } else {
+            dlgTitle = 'Disconnect repeater';
+            dlgWarn  = false;
+            dlgMsg = outerFieldBindings > 0
+              ? 'Inner field bindings will be removed. Layout and styling are preserved.'
+              : 'All items will show the same placeholder content.';
+          }
+
+          // ── Collect all sibling rep instances for snapshot ────────────────────
+          const _snapRepIds = [elId];
+          if (def.repTemplate) {
+            Object.keys(EL_DEFS).forEach((id) => {
+              if (id !== elId && EL_DEFS[id].repTemplate === def.repTemplate && EL_DEFS[id].isRepeater)
+                _snapRepIds.push(id);
+            });
+            _snapRepIds.sort();
+          }
+
+          showConfirm(dlgTitle, dlgMsg, 'Disconnect', function () {
+            // FR-008: snapshot for undo — taken immediately before execution
+            S._lastUnbindState = {
+              elId,
+              bindings: JSON.parse(JSON.stringify(S.bindings)),
+              ctxMap:   JSON.parse(JSON.stringify(S.ctxMap)),
+              repBound: _snapRepIds.reduce((acc, rId) => {
+                acc[rId] = !!document.getElementById(rId)?.classList.contains('bound');
+                return acc;
+              }, {}),
+              containers: _snapRepIds.map((rId) => {
+                const rd = document.getElementById(rId);
+                const c  = rd ? getRepContainer(rd) : null;
+                return { repId: rId, html: c ? c.innerHTML : '' };
+              }),
+            };
             doUnbindRepeater(elId);
-          });
+          }, dlgWarn);
           return;
         }
 
@@ -40140,10 +40402,34 @@
         const firstRepDom = document.getElementById(allRepIds[0]);
         const firstContainer = firstRepDom ? getRepContainer(firstRepDom) : null;
         let templateItemHTML = '';
+
+        // Pre-pass: delete |Items bindings for ALL inner on-repeater reps in the full container
+        // (inner rep loop below only touches firstItem; siblings would stay "bound" in refreshAllPills)
+        if (firstContainer) {
+          firstContainer.querySelectorAll('.c-repeater').forEach((rep) => {
+            if (keepConnectedInnerReps.has(rep.id)) return;
+            if (EL_DEFS[rep.id]?.contextModel === 'on-repeater') {
+              delete S.bindings[rep.id + '|Items'];
+            }
+          });
+        }
+
         if (firstContainer) {
           const firstItem = firstContainer.querySelector(':scope > .rep-item');
           if (firstItem) {
+            // Generic placeholder labels based on the element's semantic role,
+            // so the disconnected fallback reads as "Title / Description" — not the last bound row.
+            function placeholderForCel(cel) {
+              const defName = (EL_DEFS[cel.id]?.name || '').toLowerCase();
+              if (/icon|thumb|image|avatar|photo|picture/.test(defName)) return '__thumb__';
+              if (/desc|subtitle|summary|bio|caption/.test(defName)) return 'Description';
+              if (/title|name|heading|label/.test(defName)) return 'Title';
+              if (/price|amount|count|number/.test(defName)) return 'Value';
+              return propPlaceholder('Value');
+            }
             firstItem.querySelectorAll('.c-el').forEach((cel) => {
+              // Skip c-el elements that are INSIDE an inner repeater — handled separately below
+              if (cel.closest('.c-repeater') !== firstItem.closest('.c-repeater')) return;
               cel.classList.remove('bound');
               const bt = cel.querySelector('.el-bind-tag');
               if (bt) bt.textContent = '';
@@ -40151,10 +40437,26 @@
                 const img = cel.querySelector('img');
                 if (img) img.src = IMG_PLACEHOLDER;
               } else {
-                const vEl = findValEl(cel.id);
-                if (vEl) {
-                  const tpl = EL_DEFS[cel.id]?.repTemplate || cel.id;
-                  vEl.textContent = S.staticValues[tpl + '|Value'] || propPlaceholder('Value');
+                const placeholder = placeholderForCel(cel);
+                if (placeholder === '__thumb__') {
+                  // Replace text content with a tiny image-frame glyph for icon-shaped slots
+                  const vEl = findValEl(cel.id);
+                  const glyph = '<svg viewBox="0 0 24 24" width="60%" height="60%" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.4"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>';
+                  if (vEl) {
+                    vEl.innerHTML = glyph;
+                  } else {
+                    // Some icon slots store emoji as a direct text node — clear and inject the glyph
+                    [...cel.childNodes].forEach((n) => {
+                      if (n.nodeType === 3) n.remove();
+                    });
+                    const span = document.createElement('span');
+                    span.innerHTML = glyph;
+                    span.style.cssText = 'display:flex;align-items:center;justify-content:center;width:100%;height:100%';
+                    cel.appendChild(span);
+                  }
+                } else {
+                  const vEl = findValEl(cel.id);
+                  if (vEl) vEl.textContent = placeholder;
                 }
               }
             });
@@ -40171,26 +40473,64 @@
                 }
                 return;
               }
-              innerRep.classList.remove('bound');
+              const innerIsOnRepeater = EL_DEFS[innerRep.id]?.contextModel === 'on-repeater';
+              // For on-repeater inner reps: keep .bound so CSS doesn't hide items (display:none rule).
+              // Binding was already deleted in the pre-pass above; refreshAllPills will clear the pill.
+              if (!innerIsOnRepeater) {
+                innerRep.classList.remove('bound');
+              }
               const pill = innerRep.querySelector('.rep-pill');
               if (pill) pill.innerHTML = '';
               const bindBtn = innerRep.querySelector('.rep-bind-btn');
               if (bindBtn) bindBtn.style.display = '';
               const ic = getRepContainer(innerRep);
               if (ic) {
-                const innerFirst = ic.querySelector(':scope > .rep-item');
-                if (innerFirst) {
-                  innerFirst.querySelectorAll('.c-el').forEach((cel) => {
-                    cel.classList.remove('bound');
-                    const vEl = findValEl(cel.id);
-                    if (vEl) {
-                      vEl.textContent = 'Set value...';
-                      vEl.classList.add('static');
+                if (innerIsOnRepeater) {
+                  // Normalize to exactly 3 items (the default static repeater count) —
+                  // trim if there are more, pad by cloning the first if there are fewer.
+                  const allInnerItems = Array.from(ic.querySelectorAll(':scope > .rep-item'));
+                  if (allInnerItems.length > 3) {
+                    allInnerItems.slice(3).forEach((item) => item.remove());
+                  } else if (allInnerItems.length > 0 && allInnerItems.length < 3) {
+                    const tmpl = allInnerItems[0];
+                    while (ic.querySelectorAll(':scope > .rep-item').length < 3) {
+                      const clone = tmpl.cloneNode(true);
+                      clone.removeAttribute('id');
+                      clone.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
+                      clone.querySelectorAll('[onclick]').forEach((el) => el.removeAttribute('onclick'));
+                      ic.appendChild(clone);
                     }
+                  }
+                  // Strip binding indicators and clear content from all kept items
+                  ic.querySelectorAll('.c-el').forEach((cel) => {
+                    cel.classList.remove('bound');
                     const bt = cel.querySelector('.el-bind-tag');
                     if (bt) bt.textContent = '';
+                    if (cel.classList.contains('c-el-img')) {
+                      const img = cel.querySelector('img');
+                      if (img) img.src = IMG_PLACEHOLDER;
+                    } else {
+                      const vEl = findValEl(cel.id);
+                      if (vEl) vEl.textContent = propPlaceholder('Value');
+                    }
                   });
-                  ic.innerHTML = innerFirst.outerHTML + innerFirst.outerHTML + innerFirst.outerHTML;
+                } else {
+                  const innerFirst = ic.querySelector(':scope > .rep-item');
+                  if (innerFirst) {
+                    innerFirst.querySelectorAll('.c-el').forEach((cel) => {
+                      cel.classList.remove('bound');
+                      const vEl = findValEl(cel.id);
+                      if (vEl) {
+                        const savedBk = Object.keys(savedBindings).find(bk => bk.startsWith(cel.id + '|'));
+                        const sampleText = savedBk ? (savedBindings[savedBk].sample || '').replace(/^"|"$/g, '') : '';
+                        vEl.textContent = sampleText || propPlaceholder('Value');
+                        vEl.classList.add('static');
+                      }
+                      const bt = cel.querySelector('.el-bind-tag');
+                      if (bt) bt.textContent = '';
+                    });
+                    ic.innerHTML = innerFirst.outerHTML + innerFirst.outerHTML + innerFirst.outerHTML;
+                  }
                 }
               }
               const cntEl = document.getElementById(
@@ -40205,7 +40545,13 @@
         allRepIds.forEach((repId, idx) => {
           const repDom = document.getElementById(repId);
           if (!repDom) return;
-          repDom.classList.remove('bound');
+          // For on-repeater outer reps: keep .bound so category item content remains visible
+          // (CSS .c-repeater:not(.bound) .rep-item .c-el hides all content when unbound).
+          // The |Items binding was already deleted above; refreshAllPills will clear the pill.
+          const repIsOnRepeater = EL_DEFS[repId]?.contextModel === 'on-repeater';
+          if (!repIsOnRepeater) {
+            repDom.classList.remove('bound');
+          }
           const countEl = document.getElementById('rep-count-' + repId.replace('repeater-', ''));
           if (countEl) countEl.textContent = '— not connected';
           const container = getRepContainer(repDom);
@@ -40242,13 +40588,69 @@
 
         refreshElementBindTags();
         refreshRepLoadMoreButton(elId);
-        toast(
-          removedCount > 0
+        {
+          const undoMsg = removedCount > 0
             ? `Repeater disconnected · ${removedCount} inner binding${removedCount > 1 ? 's' : ''} removed`
-            : 'Repeater disconnected',
-        );
+            : 'Repeater disconnected';
+          const t = document.getElementById('toast');
+          t.innerHTML = `<span style="flex:1">${undoMsg}</span><button class="toast-undo" onclick="undoRepUnbind()" style="margin-right:6px">Undo</button><button class="toast-dismiss" onclick="dismissToast()" title="Dismiss">✕</button>`;
+          t.className = 'toast show';
+          clearTimeout(t._t);
+          t._t = setTimeout(() => t.classList.remove('show'), 6000);
+        }
         refreshAllPills();
         const repEl = document.getElementById(elId);
+
+        // For M1 (sub-array) / M2 inner reps: reset sibling inner reps inside the same outer
+        // parent repeater so every parent item shows the 3-item fallback.
+        const isRirInner = def._rir_m1_subarray || def._rir_m2_catIdx;
+        if (isRirInner) {
+          const outerParentRep = repEl?.parentElement?.closest('.c-repeater');
+          if (outerParentRep) {
+            outerParentRep.querySelectorAll('.c-repeater').forEach((sibRep) => {
+              if (sibRep.id === elId) return;
+              const sibDef = EL_DEFS[sibRep.id];
+              if (!sibDef) return;
+              const isSibling = sibDef._rir_m1_subarray || sibDef._rir_m2_catIdx;
+              if (!isSibling) return;
+              // Mirror unbind on sibling: drop |Items binding and child bindings, reset items to 3
+              delete S.bindings[sibRep.id + '|Items'];
+              sibRep.querySelectorAll('.c-el').forEach((cel) => {
+                if (cel.id) {
+                  Object.keys(S.bindings).forEach((bk) => {
+                    if (bk.startsWith(cel.id + '|')) delete S.bindings[bk];
+                  });
+                }
+                cel.classList.remove('bound');
+                const bt = cel.querySelector('.el-bind-tag');
+                if (bt) bt.textContent = '';
+                if (cel.classList.contains('c-el-img')) {
+                  const img = cel.querySelector('img');
+                  if (img) img.src = IMG_PLACEHOLDER;
+                } else {
+                  const vEl = findValEl(cel.id);
+                  if (vEl) vEl.textContent = propPlaceholder('Value');
+                }
+              });
+              const sibIc = getRepContainer(sibRep);
+              if (sibIc) {
+                const sibItems = Array.from(sibIc.querySelectorAll(':scope > .rep-item'));
+                if (sibItems.length > 3) sibItems.slice(3).forEach((it) => it.remove());
+                while (sibIc.querySelectorAll(':scope > .rep-item').length < 3 && sibItems[0]) {
+                  const clone = sibItems[0].cloneNode(true);
+                  clone.removeAttribute('id');
+                  clone.querySelectorAll('[id]').forEach((el) => el.removeAttribute('id'));
+                  sibIc.appendChild(clone);
+                }
+              }
+              const sibPill = sibRep.querySelector('.rep-pill');
+              if (sibPill) sibPill.innerHTML = '';
+              const sibCount = document.getElementById('rep-count-' + sibRep.id.replace('repeater-', ''));
+              if (sibCount) sibCount.textContent = '— not connected';
+            });
+          }
+        }
+
         let ancestor = repEl;
         while (ancestor) {
           ancestor = ancestor?.parentElement ? ancestor.parentElement.closest('.c-repeater') : null;
@@ -40257,6 +40659,28 @@
         S.sel = elId;
         updateSelectionVisual(elId);
         renderBody();
+      }
+
+      function undoRepUnbind() {
+        const snap = S._lastUnbindState;
+        if (!snap) return;
+        S.bindings = snap.bindings;
+        S.ctxMap   = snap.ctxMap;
+        snap.containers.forEach(({ repId, html }) => {
+          const repDom = document.getElementById(repId);
+          if (!repDom) return;
+          if (snap.repBound[repId]) repDom.classList.add('bound');
+          repDom.querySelectorAll(':scope > .rep-notice').forEach(n => n.remove());
+          const container = getRepContainer(repDom);
+          if (container && html) container.innerHTML = html;
+        });
+        S._lastUnbindState = null;
+        refreshAllPills();
+        refreshElementBindTags();
+        if (typeof refreshRepeaterSkeletons === 'function') refreshRepeaterSkeletons();
+        renderBody();
+        dismissToast();
+        toast('Undo — repeater reconnected', true, 2400);
       }
 
       function unbindParam(elId, propKey, paramName, e) {
@@ -40445,10 +40869,16 @@
           const def = EL_DEFS[id];
           if (!def.isRepeater) return;
           const pill = document.getElementById('pill-' + id);
-          if (!pill) return;
           const binding = S.bindings[id + '|Items'];
+          // Toggle stroke override: any repeater with .bound but no |Items binding shows the neutral border
+          const repDom = document.getElementById(id);
+          if (repDom) {
+            if (!binding && repDom.classList.contains('bound')) repDom.classList.add('unbound-stroke');
+            else repDom.classList.remove('unbound-stroke');
+          }
+          if (!pill) return;
           if (binding) {
-            const ctxLabel = `${resolveCtxName(binding.ctxId)} · ${displayFieldName(id, binding)}`;
+            const ctxLabel = `${resolveCtxName(binding.ctxId)} · ${formatRepeaterListLabel(id, binding)}`;
             const bindIcon = `<svg class="el-bind-icon" width="8" height="8" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6l-1.2 1.2a2.5 2.5 0 0 1-3.6-3.4L6.4 2.6a2.5 2.5 0 0 1 3.5 0l.1.1"/><path d="M6 10l1.2-1.2a2.5 2.5 0 0 1 3.6 3.4l-1.2 1.2a2.5 2.5 0 0 1-3.5 0l-.1-.1"/></svg>`;
             const ctxId = binding.ctxId;
             const hasSort = (S.sortRules[ctxId] || []).length > 0 || !!(S._itemsParams?.[id]?.sort && S._itemsParams[id].sort !== 'created_desc');
@@ -40767,14 +41197,52 @@
           if (!S.ctxMap[repId].includes(srcId)) S.ctxMap[repId].push(srcId);
         });
 
-        // Always set the new Items binding
+        // Always set the new Items binding (capture the old ctx first so we can
+        // clean up inner sub-array repeaters that were rooted in it).
         const bkey = elId + '|' + propKey;
+        const oldParentB = S.bindings[bkey];
+        const oldParentCtxId = oldParentB?.ctxId;
+        const oldParentFieldName = oldParentB?.fieldName;
         S.bindings[bkey] = { ctxId: srcId, fieldName, sample: field.sample };
         allRepIds.forEach((repId) => {
           if (repId !== elId) {
             S.bindings[repId + '|' + propKey] = { ctxId: srcId, fieldName, sample: field.sample };
           }
         });
+
+        // When the parent rep switches to a different context, any inner sub-array
+        // (M1-style) repeater rooted in the OLD context becomes invalid. Remove it
+        // from the DOM and clean up state — the new context doesn't have that sub-array,
+        // and leaving stale placeholder text in cat items reads as a phantom component.
+        if (oldParentCtxId && oldParentCtxId !== srcId) {
+          allRepIds.forEach((repId) => {
+            const repDom = document.getElementById(repId);
+            if (!repDom) return;
+            [...repDom.querySelectorAll('.c-repeater')].forEach((innerRep) => {
+              const innerB = S.bindings[innerRep.id + '|Items'];
+              if (!innerB || innerB.ctxId !== oldParentCtxId) return;
+              // Collect inner DOM element IDs and matching EL_DEFS / bindings to purge
+              const idsToPurge = new Set();
+              if (innerRep.id) idsToPurge.add(innerRep.id);
+              innerRep.querySelectorAll('[id]').forEach((el) => idsToPurge.add(el.id));
+              // Also catch sibling/template clones in EL_DEFS
+              const innerTpl = EL_DEFS[innerRep.id]?.repTemplate;
+              if (innerTpl) {
+                Object.keys(EL_DEFS).forEach((id) => {
+                  if (EL_DEFS[id].repTemplate === innerTpl) idsToPurge.add(id);
+                });
+              }
+              idsToPurge.forEach((id) => {
+                Object.keys(S.bindings).forEach((bk) => {
+                  if (bk.startsWith(id + '|')) delete S.bindings[bk];
+                });
+                delete S.ctxMap[id];
+                delete EL_DEFS[id];
+              });
+              innerRep.remove();
+            });
+          });
+        }
 
         if (savedBindings) {
           if (isSameField) {
@@ -40962,6 +41430,9 @@
             );
             bindingKeys.forEach((bindingKey) => {
               const binding = S.bindings[bindingKey];
+              if (!binding) return;
+              // Skip elements bound to a different context — they belong to a nested repeater
+              if (binding.ctxId && b && binding.ctxId !== b.ctxId) return;
               const propKey = bindingKey.split('|')[1];
               const value = rowValue(row, binding?.fieldName);
               if (value === undefined || value === null || value === '') return;
@@ -42464,8 +42935,8 @@
       function renderPageSizeAndRandomRows(ctxId, ctx) {
         const _psVal2 = parseInt(S.cfgValues?.[ctxId]?.pageSize || '25', 10);
         const _pagOff2 = S.sel ? getRepPag(S.sel)?.mode !== 'scroll' : false;
-        const _psLabel2 = _pagOff2 ? 'Item limit' : 'Items per load';
-        const _psTip2 = _pagOff2 ? 'Maximum number of items the repeater displays. Since pagination is off, all items load at once — keep this number low to avoid slow load times.' : 'How many items load at a time as visitors scroll. Use a lower number for faster loading, or a higher number to load more items at once.';
+        const _psLabel2 = 'Items per load';
+        const _psTip2 = _pagOff2 ? 'How many items the repeater displays. Since pagination is off, all of these items load at once — keep this number low to avoid slow load times.' : 'How many items load at a time as visitors scroll. Use a lower number for faster loading, or a higher number to load more items at once.';
         return `<div class="ctx-cfg-row" style="padding-left:8px">
     <div class="ctx-cfg-lbl">${_psLabel2} <span class="cfg-info">?<span class="cfg-info-tip">${_psTip2}</span></span></div>
     <div class="ctx-cfg-right" style="flex-direction:column;align-items:stretch;gap:6px">
@@ -42599,8 +43070,8 @@
 
         const _psVal = parseInt(S.cfgValues?.[ctxId]?.pageSize || '25', 10);
         const _pagOff = S.sel ? getRepPag(S.sel)?.mode !== 'scroll' : false;
-        const _psLabel = _pagOff ? 'Item limit' : 'Items per load';
-        const _psTip = _pagOff ? 'Maximum number of items the repeater displays. Since pagination is off, all items load at once — keep this number low to avoid slow load times.' : 'How many items load at a time as visitors scroll. Use a lower number for faster loading, or a higher number to load more items at once.';
+        const _psLabel = 'Items per load';
+        const _psTip = _pagOff ? 'How many items the repeater displays. Since pagination is off, all of these items load at once — keep this number low to avoid slow load times.' : 'How many items load at a time as visitors scroll. Use a lower number for faster loading, or a higher number to load more items at once.';
         const pageSizeRow = `<div class="ctx-cfg-row">
           <div class="ctx-cfg-lbl">${_psLabel} <span class="cfg-info">?<span class="cfg-info-tip">${_psTip}</span></span></div>
           <div class="ctx-cfg-right" style="flex-direction:column;align-items:stretch;gap:6px">
@@ -42693,23 +43164,43 @@
           ${pageSizeRow}
         </div>`;
             } else {
+              // Nested levels expose sort, filter, and item limit
               const rowsHtml = (byDepth[depth] || [])
                 .map((cfg) => {
                   const type = cfg.nestedType || 'sort';
+                  if (type === 'limit') {
+                    // Item limit — always-on slider (1-100, default 10), keyed by depth
+                    const _lKey = 'nestedPageSize_' + cfg.depth;
+                    if (!S.cfgValues) S.cfgValues = {};
+                    if (!S.cfgValues[ctxId]) S.cfgValues[ctxId] = {};
+                    if (!S.cfgValues[ctxId][_lKey]) S.cfgValues[ctxId][_lKey] = 10;
+                    const limVal = parseInt(S.cfgValues[ctxId][_lKey], 10);
+                    const outerCount = parseInt(S.cfgValues?.[ctxId]?.pageSize || '25', 10);
+                    const total = outerCount * limVal;
+                    const perfWarning = total > 200
+                      ? `<div style="margin-top:6px;padding:7px 9px;background:color-mix(in srgb,#f59e0b 10%,transparent);border:1px solid color-mix(in srgb,#f59e0b 40%,transparent);border-radius:6px;font-size:11px;color:#92400e;line-height:1.5">⚠ Your page loads ${outerCount} outer × ${limVal} inner = ~${total} items at once. This can noticeably slow your site — consider lowering these numbers.</div>`
+                      : `<div style="margin-top:6px;font-size:10px;color:var(--t3);line-height:1.5">${outerCount} outer × ${limVal} inner = ~${total} items load per page.</div>`;
+                    return `<div class="ctx-cfg-row" style="margin-bottom:2px">
+            <div class="ctx-cfg-lbl" style="gap:5px">
+              ${cfg.label || cfg.nestedLabel}
+              ${cfg.description ? `<span class="cfg-info">?<span class="cfg-info-tip">${cfg.description}</span></span>` : ''}
+            </div>
+            <div class="ctx-cfg-right" style="flex-direction:column;align-items:stretch;gap:6px">
+              <div style="display:flex;align-items:center;gap:8px">
+                <input type="range" min="1" max="100" value="${limVal}" oninput="if(!S.cfgValues)S.cfgValues={};if(!S.cfgValues['${ctxId}'])S.cfgValues['${ctxId}']={};S.cfgValues['${ctxId}']['${_lKey}']=this.value;markInstanceModified('${ctxId}');renderBody()" style="flex:1;accent-color:var(--acc);height:4px">
+                <input type="number" min="1" max="100" value="${limVal}" onchange="if(!S.cfgValues)S.cfgValues={};if(!S.cfgValues['${ctxId}'])S.cfgValues['${ctxId}']={};S.cfgValues['${ctxId}']['${_lKey}']=this.value;markInstanceModified('${ctxId}');renderBody()" style="width:52px;padding:4px 6px;border:1px solid var(--b1);border-radius:6px;font-size:12px;font-family:'SF Mono',ui-monospace,Menlo,Consolas,monospace;text-align:center;background:var(--bg);color:var(--t1)">
+              </div>
+              ${perfWarning}
+            </div>
+          </div>`;
+                  }
                   const currentVal =
                     S.cfgValues?.[ctxId]?.[cfg.key] || cfg.default || cfg.options?.[0] || '';
                   const isDefault = !cfg.default || currentVal === cfg.default;
-                  const typeBadgeStyle =
-                    type === 'filter'
-                      ? 'background:#fef3c7;color:#92400e;border-color:#fde68a'
-                      : type === 'limit'
-                        ? 'background:#d1fae5;color:#065f46;border-color:#a7f3d0'
-                        : 'background:var(--sur3);color:var(--t3);border-color:var(--b2)';
                   const resetBtn = `<span class="cfg-reset ${!isDefault ? 'visible' : ''}" onclick="resetCfgOption(event,'${ctxId}','${cfg.key}','${(cfg.default || '').replace(/'/g, "\\'")}')">↺</span>`;
                   return `<div class="ctx-cfg-row" style="margin-bottom:2px">
             <div class="ctx-cfg-lbl" style="gap:5px">
               ${cfg.label || cfg.nestedLabel}
-              <span style="font-size:9px;font-family:'DM Mono',monospace;padding:1px 5px;border-radius:4px;border:1px solid;${typeBadgeStyle}">${type}</span>
               ${cfg.description ? `<span class="cfg-info">?<span class="cfg-info-tip">${cfg.description}</span></span>` : ''}
             </div>
             <div class="ctx-cfg-right">
@@ -42723,12 +43214,8 @@
           </div>`;
                 })
                 .join('');
-              const hasClientSide = (byDepth[depth] || []).some(
-                (c) => c.nestedType === 'filter' || c.nestedType === 'limit',
-              );
               body = `<div style="padding:6px 8px;display:flex;flex-direction:column;gap:2px">
           ${rowsHtml}
-          ${hasClientSide ? `<div style="margin-top:4px;padding:6px 8px;background:color-mix(in srgb,var(--acc) 5%,transparent);border:1px solid color-mix(in srgb,var(--acc) 15%,transparent);border-radius:5px;font-size:10px;color:var(--t2)">ℹ Filter and limit run client-side — all data is fetched first</div>` : ''}
         </div>`;
             }
 
@@ -42736,19 +43223,18 @@
             return `<div style="border:1px solid ${hasCustom ? 'color-mix(in srgb,var(--acc) 35%,transparent)' : 'var(--b1)'};border-radius:6px;margin-bottom:6px;overflow:hidden;${indent}">
         <div style="${headerStyle}" onclick="toggleCfgAccordion('${ctxId}',${depth})">
           <span style="flex:1;font-size:12px;font-weight:600;color:var(--t1)">${label}</span>
-          <span style="font-size:11px;color:${hasCustom ? 'var(--acc)' : 'var(--t3)'};font-style:${hasCustom ? 'normal' : 'italic'};max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${summary}</span>
           <span style="font-size:10px;color:var(--t3);margin-left:6px;transition:transform .15s;display:inline-block;transform:rotate(${isOpen ? '90' : '0'}deg)">›</span>
         </div>
         ${isOpen ? `<div style="border-top:1px solid var(--b1)">${body}</div>` : ''}
       </div>`;
           }
 
-          // L1 section (always first) + deeper levels
+          // Show all array levels exposed by this context — we can't predict which sub-arrays
+          // a designer will eventually bind, so list every configurable depth.
           const allDepths = [1, ...depths.filter((d) => d > 1)];
           const sectionsHtml = allDepths.map((d) => accordionSection(d)).join('');
 
           return `<div class="ctx-settings-section">
-      <div class="ctx-settings-section-lbl">Items sort &amp; filter</div>
       ${sectionsHtml}
     </div>
     ${
@@ -43739,7 +44225,7 @@
         if (promoted.length > 0) {
           const ctxNames = promoted.join(', ');
           const t = document.getElementById('toast');
-          t.innerHTML = `Moved to ${EL_DEFS[targetSectionId]?.name || targetSectionId}. "${ctxNames}" promoted to page level. <span class="toast-undo" onclick="undoElMove('${elId}','${prevSection}','${targetSectionId}',${JSON.stringify(ctxIdsToPromote).replace(/"/g, '&quot;')})">Undo</span>`;
+          t.innerHTML = `<span style="flex:1">Moved to ${EL_DEFS[targetSectionId]?.name || targetSectionId}. "${ctxNames}" promoted to page level. <span class="toast-undo" onclick="undoElMove('${elId}','${prevSection}','${targetSectionId}',${JSON.stringify(ctxIdsToPromote).replace(/"/g, '&quot;')})">Undo</span></span><button class="toast-dismiss" onclick="dismissToast()" title="Dismiss">✕</button>`;
           t.className = 'toast show ok';
           clearTimeout(t._t);
           t._t = setTimeout(() => t.classList.remove('show'), 5000);
@@ -44019,8 +44505,10 @@
               if (!showRirDropTarget(ev.clientX, ev.clientY)) {
                 clearRirDropTargets();
                 showSectionDropTarget(ev.clientX, ev.clientY);
+                ghost.classList.remove('blocked');
               } else {
                 clearSectionDropTargets();
+                ghost.classList.toggle('blocked', !!_rirDropTarget?.blocked);
               }
             }
           }
@@ -44146,19 +44634,20 @@
           .querySelectorAll('.el-drop-target')
           .forEach((el) => el.classList.remove('el-drop-target'));
         _customDragTargetRepItem = null;
-        // Find the first rep-item under the cursor
+        // Iterate in reverse DOM order so innermost (deepest) rep-item wins over its ancestor
         const repItems = [...document.querySelectorAll('.rep-item')];
-        for (const item of repItems) {
+        for (let i = repItems.length - 1; i >= 0; i--) {
+          const item = repItems[i];
           const r = item.getBoundingClientRect();
           if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
-            // Find the parent repeater id
             const repDom = item.closest('.c-repeater');
             if (repDom) {
               _customDragTargetRepItem = repDom.id;
-              // Highlight all rep-items in this repeater
-              repDom
-                .querySelectorAll('.rep-item')
-                .forEach((ri) => ri.classList.add('rep-item-drop-target'));
+              const ic = getRepContainer(repDom);
+              const directItems = ic
+                ? ic.querySelectorAll(':scope > .rep-item')
+                : repDom.querySelectorAll('.rep-item');
+              directItems.forEach((ri) => ri.classList.add('rep-item-drop-target'));
               return true;
             }
           }
@@ -44193,6 +44682,12 @@
           const item = repItems[i];
           const r = item.getBoundingClientRect();
           if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+            // 4th-level block: allergen items are max depth
+            if (EL_DEFS[item.id]?._rir_blocked) {
+              item.classList.add('rir-drop-blocked');
+              _rirDropTarget = { blocked: true, el: item };
+              return true;
+            }
             // Custom RiR flow: drop info stored in EL_DEFS
             if (EL_DEFS[item.id]?._rir_drop) {
               item.classList.add('rir-drop-active');
@@ -44230,7 +44725,7 @@
       function addNestedRepeaterToRirTarget(dropInfo) {
         if (!dropInfo) return;
         if (dropInfo.blocked) {
-          toast('Maximum nesting depth reached (3 levels)');
+          toast("Repeaters can't be nested more than 3 levels deep — keeping it to 3 helps maintain your site's performance.", false, 0);
           return;
         }
         const zone = dropInfo.el;
@@ -44240,6 +44735,7 @@
         if (level === 'dishes' && zone.closest('#sec-rir-m2')) { _openRirM2ContextPicker(zone); return; }
         if (level === 'dishes')    { _addRirDishesLevel(zone);    return; }
         if (level === 'allergens') { _addRirAllergensLevel(zone); return; }
+        if (level === 'allergens-m2') { _openRirM2AllergensContextPicker(zone); return; }
         const parentRepId = zone.dataset.parentRep;
         const itemId = zone.dataset.itemId;
         const depth = parseInt(zone.dataset.depth || '1');
@@ -45653,7 +46149,7 @@
           </div>
         </div>
       </div>
-      ${isRelational ? `<div class="rir-m2-drop-cue" onclick="event.stopPropagation();_openRirM2ContextPicker(document.getElementById('${catId(c)}'))" style="margin-top:10px;border:2px dashed var(--b2);border-radius:6px;padding:8px 12px;text-align:center;font-size:11px;color:var(--t3);cursor:pointer;transition:all .15s;user-select:none" onmouseenter="this.style.borderColor='var(--acc)';this.style.color='var(--acc)';this.style.background='var(--acc-d)'" onmouseleave="this.style.borderColor='';this.style.color='';this.style.background=''">↻ Drop Repeater · or click to add</div>` : ''}
+      ${isRelational ? `<div class="rir-m2-drop-cue" onclick="event.stopPropagation();_openRirM2ContextPicker(document.getElementById('${catId(c)}'))" style="margin-top:10px;border:2px dashed transparent;border-radius:6px;padding:8px 12px;text-align:center;font-size:11px;color:transparent;cursor:pointer;transition:all .15s;user-select:none;background:transparent" onmouseenter="this.style.borderColor='var(--acc)';this.style.color='var(--acc)';this.style.background='var(--acc-d)'" onmouseleave="this.style.borderColor='transparent';this.style.color='transparent';this.style.background='transparent'">↻ Drop Repeater · or click to add</div>` : ''}
     </div>`;
 
         const repEl = document.createElement('div');
@@ -45753,7 +46249,7 @@
     </div>`;
 
           const repEl = document.createElement('div');
-          repEl.className = 'c-repeater bound';
+          repEl.className = 'c-repeater bound blank-connected';
           repEl.id = drRepId;
           repEl.setAttribute('onclick', `selEl(event,'${drRepId}')`);
           repEl.style.cssText = 'border-radius:6px;margin-top:8px';
@@ -45772,8 +46268,9 @@
           z.appendChild(repEl);
           if (EL_DEFS[z.id]) delete EL_DEFS[z.id]._rir_drop;
 
-          EL_DEFS[drRepId] = { name: 'Dishes', type: 'Repeater', section: sectionId, isRepeater: true, contextModel: 'on-repeater', props: [...REP_PROPS] };
-          S.ctxMap[drRepId] = S.ctxMap[parentRepId] ? [...S.ctxMap[parentRepId]] : [];
+          EL_DEFS[drRepId] = { name: 'Dishes', type: 'Repeater', section: sectionId, isRepeater: true, contextModel: 'on-repeater', props: [...REP_PROPS], _rir_m1_subarray: true };
+          // M1 inner repeater inherits parent context — no local context (shown under "Available from parent")
+          S.ctxMap[drRepId] = [];
           dishes.forEach((dish, di) => {
             const d = di + 1;
             EL_DEFS[diId(d)] = { name: `Dish ${d}`, type: 'RepItem', section: sectionId, isRepItem: true, repTemplate: 'rir-di-' + ts, props: [],
@@ -45859,6 +46356,172 @@
         repositionDd();
       }
 
+      // ── RiR M2: drop on dish item opens allergens context picker ────────────────
+      function _openRirM2AllergensContextPicker(zone) {
+        const ts      = Date.now();
+        const rirDrop = EL_DEFS[zone.id]?._rir_drop;
+        const parentRepId = rirDrop?.parentRepId || zone.dataset.parentRep;
+        const catIdx      = rirDrop?.catIdx      ?? zone.dataset.catIdx;
+        const dishIdx     = rirDrop?.dishIdx     ?? zone.dataset.dishIdx;
+        const sectionId   = EL_DEFS[parentRepId]?.section || 'sec-rir-m2';
+        const plId        = 'rir-m2-al-ph-' + ts;
+
+        const _linkSvg  = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6l-1.2 1.2a2.5 2.5 0 0 1-3.6-3.4L6.4 2.6a2.5 2.5 0 0 1 3.5 0l.1.1"/><path d="M6 10l1.2-1.2a2.5 2.5 0 0 1 3.6 3.4l-1.2 1.2a2.5 2.5 0 0 1-3.5 0l-.1-.1"/></svg>`;
+        const _chainSvg = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" width="12" height="12"><circle cx="4.5" cy="3.5" r="2"/><circle cx="11.5" cy="12.5" r="2"/><path d="M4.5 5.5C4.5 9 11.5 7 11.5 10.5"/></svg>`;
+
+        const placeholder = document.createElement('div');
+        placeholder.className = 'c-repeater';
+        placeholder.id = plId;
+        placeholder.setAttribute('onclick', `selEl(event,'${plId}')`);
+        placeholder.style.cssText = 'border-radius:6px;margin-top:6px';
+        placeholder.innerHTML = `
+    <div class="c-el-overlay"></div>
+    <div class="rep-header" onclick="openDd(event,'${plId}','Items')">
+      <span class="rep-icon" style="opacity:.4">${_linkSvg}</span>
+      <span class="rep-label" style="opacity:.4">Repeater</span>
+      <span class="rep-count" style="opacity:.4;font-style:italic">not connected</span>
+      <div class="rep-bind-btn" onclick="openDd(event,'${plId}','Items')" title="Connect to list">${_chainSvg}</div>
+    </div>`;
+        if (EL_DEFS[zone.id]) delete EL_DEFS[zone.id]._rir_drop;
+        zone.querySelector('.rir-m2-allergens-cue')?.remove();
+        zone.appendChild(placeholder);
+
+        EL_DEFS[plId] = {
+          name: 'Repeater', type: 'Repeater', section: sectionId,
+          isRepeater: true, contextModel: 'on-repeater', props: [...REP_PROPS],
+          _rir_m2_allergens: true, _rir_m2_allergens_parentRepId: parentRepId,
+          _rir_m2_allergens_catIdx: catIdx, _rir_m2_allergens_dishIdx: dishIdx,
+        };
+        S.ctxMap[plId] = [];
+
+        const zoneRect = zone.getBoundingClientRect();
+        const dd       = document.getElementById('dd');
+        const panelLeft = window.innerWidth - parseInt(getComputedStyle(document.documentElement).getPropertyValue('--panel'));
+        S.dd = {
+          open: true, elId: plId, propKey: 'Items', paramName: null, step: 'source',
+          srcId: null, fieldName: null, openPanel: 'src',
+          _preferBelow: true, _anchorY: zoneRect.bottom, _anchorTop: zoneRect.top,
+        };
+        dd.style.left = Math.max(8, panelLeft - 290 - 12) + 'px';
+        dd.classList.add('open');
+        document.getElementById('dd-title').textContent = 'Connect · Items';
+        renderDd();
+        repositionDd();
+      }
+
+      // ── Called after user confirms allergens context in M2 ─────────────────────────
+      function _addRirAllergensLevelM2FromPanel(placeholderId) {
+        const def = EL_DEFS[placeholderId];
+        if (!def?._rir_m2_allergens) return;
+        const parentRepId = def._rir_m2_allergens_parentRepId;
+        const plCatIdx    = def._rir_m2_allergens_catIdx;
+        const plDishIdx   = def._rir_m2_allergens_dishIdx;
+
+        // All remaining dish items across ALL categories that still have an allergens-m2 drop zone
+        // (each category has its own dishes repeater, so we don't scope by parentRepId)
+        const remainingZones = Object.keys(EL_DEFS)
+          .filter(id => EL_DEFS[id]?._rir_drop?.level === 'allergens-m2')
+          .map(id => document.getElementById(id)).filter(Boolean);
+
+        const phEl = document.getElementById(placeholderId);
+        const phZoneLike = {
+          dataset: { catIdx: plCatIdx, dishIdx: plDishIdx, parentRep: parentRepId },
+          replaceWith: (el) => phEl?.replaceWith(el),
+        };
+
+        _addRirAllergensLevelM2Internal(parentRepId, [phZoneLike, ...remainingZones]);
+        delete EL_DEFS[placeholderId];
+      }
+
+      function _addRirAllergensLevelM2Internal(parentRepId, targets) {
+        const menuData  = REP_SAMPLE_DATA['cms-restaurant-menu'] || [];
+        const sectionId = EL_DEFS[parentRepId]?.section || 'sec-rir-m2';
+        const ts        = Date.now();
+
+        const _linkSvg = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6l-1.2 1.2a2.5 2.5 0 0 1-3.6-3.4L6.4 2.6a2.5 2.5 0 0 1 3.5 0l.1.1"/><path d="M6 10l1.2-1.2a2.5 2.5 0 0 1 3.6 3.4l-1.2 1.2a2.5 2.5 0 0 1-3.5 0l-.1-.1"/></svg>`;
+        const _chainSvg = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" width="12" height="12"><circle cx="4.5" cy="3.5" r="2"/><circle cx="11.5" cy="12.5" r="2"/><path d="M4.5 5.5C4.5 9 11.5 7 11.5 10.5"/></svg>`;
+        const _multiRefChip = `<span style="display:inline-flex;align-items:center;gap:3px;font-size:9px;background:#8b5cf618;color:#6d28d9;border:1px solid #8b5cf630;border-radius:10px;padding:1px 7px;font-weight:600">⊞ allergens[ ] · multi-ref</span>`;
+
+        targets.forEach(z => {
+          const catIdx  = z.id ? (EL_DEFS[z.id]?._rir_drop?.catIdx  ?? parseInt(z.dataset?.catIdx  || '1')) : parseInt(z.dataset?.catIdx  || '1');
+          const dishIdx = z.id ? (EL_DEFS[z.id]?._rir_drop?.dishIdx ?? parseInt(z.dataset?.dishIdx || '1')) : parseInt(z.dataset?.dishIdx || '1');
+          const dish    = menuData[catIdx - 1]?.dishes?.[dishIdx - 1];
+          if (!dish) return;
+          const allergens = dish.allergens || [];
+
+          const arRepId = `rir-m2-ar${catIdx}${dishIdx}-${ts}`;
+          const aiId    = (a) => `rir-m2-ai${catIdx}${dishIdx}${a}-${ts}`;
+          const atId    = (a) => `rir-m2-at${catIdx}${dishIdx}${a}-${ts}`;
+
+          const countLabel = allergens.length === 0 ? '0 allergens' : `${allergens.length} allergen${allergens.length !== 1 ? 's' : ''} · ${_multiRefChip}`;
+          const inner = allergens.length > 0
+            ? allergens.map((al, ai) => {
+                const a = ai + 1;
+                return `<div class="rep-item" id="${aiId(a)}" onclick="selEl(event,'${aiId(a)}')" style="cursor:pointer;position:relative">
+          <div class="c-el-overlay" style="border-radius:20px"></div>
+          <div class="c-el bound" id="${atId(a)}" onclick="selEl(event,'${atId(a)}')" style="cursor:pointer">
+            <div class="c-el-overlay" style="border-radius:4px"></div>
+            <div class="el-tags"><div class="el-type-tag">Text</div><div class="el-bind-tag"></div></div>
+            <div style="display:inline-flex;align-items:center;gap:3px;font-size:10px;padding:2px 8px;background:#fef3c7;color:#92400e;border-radius:20px;font-weight:500;border:1px solid #fde68a">${al.allergenIcon} ${al.allergenName}</div>
+          </div>
+        </div>`;
+              }).join('')
+            : `<div style="font-size:10px;color:var(--t3);padding:3px 8px;font-style:italic">No allergens</div>`;
+
+          const repEl = document.createElement('div');
+          repEl.className = 'c-repeater bound';
+          repEl.id = arRepId;
+          repEl.setAttribute('onclick', `selEl(event,'${arRepId}')`);
+          repEl.style.cssText = 'border-radius:6px;margin-top:6px';
+          repEl.innerHTML = `
+      <div class="ctx-pill rep-pill" id="pill-${arRepId}"></div>
+      <div class="c-el-overlay"></div>
+      <div class="rep-header" onclick="selElSettings(event,'${arRepId}')">
+        <span class="rep-icon">${_linkSvg}</span>
+        <span class="rep-label">Allergens</span>
+        <span class="rep-count" id="rep-count-${arRepId}">${countLabel}</span>
+        <div class="rep-bind-btn" onclick="openDd(event,'${arRepId}','Items')" title="Connect to list">${_chainSvg}</div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:3px;padding:4px 6px">${inner}</div>`;
+
+          if (z.nodeType) {
+            if (EL_DEFS[z.id]) delete EL_DEFS[z.id]._rir_drop;
+            z.querySelector('.rir-m2-allergens-cue')?.remove();
+            z.appendChild(repEl);
+          } else {
+            z.replaceWith(repEl);
+          }
+
+          EL_DEFS[arRepId] = { name: 'Allergens', type: 'Repeater', section: sectionId, isRepeater: true, contextModel: 'on-repeater', props: [...REP_PROPS] };
+          S.ctxMap[arRepId] = ['cms-rir-allergens'];
+          allergens.forEach((al, ai) => {
+            const a = ai + 1;
+            EL_DEFS[aiId(a)] = { name: `Allergen ${a}`, type: 'RepItem', section: sectionId, isRepItem: true, repTemplate: 'rir-m2-ai-' + ts, props: [], _rir_blocked: true };
+            EL_DEFS[atId(a)] = { name: 'Allergen', type: 'Text', section: sectionId, repTemplate: 'rir-m2-at-' + ts, props: [{ k: 'Value', t: 'string' }, { k: 'Visible', t: 'boolean' }] };
+          });
+
+          S.bindings[arRepId + '|Items'] = { ctxId: 'cms-rir-allergens', fieldName: 'allergens', sample: '[{allergenName, allergenIcon}]' };
+          allergens.forEach((al, ai) => {
+            const a = ai + 1;
+            S.bindings[atId(a) + '|Value'] = { ctxId: 'cms-rir-allergens', fieldName: 'allergenName', sample: `"${al.allergenName}"` };
+          });
+
+          // Register relationship so the context card shows "Related to Dishes"
+          const dishesCtxId = S.bindings[parentRepId + '|Items']?.ctxId || 'cms-rir-dishes';
+          S.ctxRelationships[`${arRepId}::cms-rir-allergens`] = {
+            linkedTo: dishesCtxId,
+            isStatic: true,
+            label: 'Related to {parent}',
+            active: true,
+          };
+        });
+
+        refreshAllPills();
+        refreshElementBindTags();
+        refreshRepeaterSkeletons();
+        toast('Allergens connected · multi-ref from Dishes', true);
+      }
+
       // ── Called after user confirms in the standard panel for an M2 placeholder ──
       function _addRirDishesLevelM2FromPanel(placeholderId) {
         const def         = EL_DEFS[placeholderId];
@@ -45925,10 +46588,11 @@
         <div class="el-tags"><div class="el-type-tag">Text</div><div class="el-bind-tag"></div></div>
         <div style="font-size:10px;color:var(--t3);line-height:1.4">${dish.description}</div>
       </div>
+      <div class="rir-m2-allergens-cue" onclick="event.stopPropagation();_openRirM2AllergensContextPicker(document.getElementById('${diId(d)}'))" style="margin-top:8px;border:1.5px dashed transparent;border-radius:5px;padding:5px 8px;text-align:center;font-size:10px;color:transparent;cursor:pointer;transition:all .15s;user-select:none;background:transparent" onmouseenter="this.style.borderColor='var(--acc)';this.style.color='var(--acc)';this.style.background='var(--acc-d)'" onmouseleave="this.style.borderColor='transparent';this.style.color='transparent';this.style.background='transparent'">↻ Drop Repeater · allergens</div>
     </div>`;
 
           const repEl = document.createElement('div');
-          repEl.className = 'c-repeater bound';
+          repEl.className = 'c-repeater bound blank-connected';
           repEl.id = drRepId;
           repEl.setAttribute('onclick', `selEl(event,'${drRepId}')`);
           repEl.style.cssText = 'border-radius:6px;margin-top:8px';
@@ -45946,17 +46610,19 @@
     </div>`;
           if (z.nodeType) {
             if (EL_DEFS[z.id]) delete EL_DEFS[z.id]._rir_drop;
+            z.querySelector('.rir-m2-drop-cue')?.remove();
             z.appendChild(repEl);
           } else {
             // Proxy object (phZoneLike): replaceWith swaps the placeholder element
             z.replaceWith(repEl);
           }
 
-          EL_DEFS[drRepId] = { name: 'Dishes', type: 'Repeater', section: sectionId, isRepeater: true, contextModel: 'on-repeater', props: [...REP_PROPS] };
+          EL_DEFS[drRepId] = { name: 'Dishes', type: 'Repeater', section: sectionId, isRepeater: true, contextModel: 'on-repeater', props: [...REP_PROPS], _rir_m2_catIdx: catIdx };
           S.ctxMap[drRepId] = ['cms-rir-dishes'];
           dishes.forEach((dish, di) => {
             const d = di + 1;
             EL_DEFS[diId(d)] = { name: `Dish ${d}`, type: 'RepItem', section: sectionId, isRepItem: true, repTemplate: 'rir-m2-di-' + ts, props: [] };
+            EL_DEFS[diId(d)]._rir_drop = { level: 'allergens-m2', catIdx, dishIdx: d, parentRepId: drRepId };
             EL_DEFS[dnId(d)] = { name: 'Dish Name',  type: 'Text', section: sectionId, repTemplate: 'rir-m2-dn-' + ts, props: [{ k: 'Value', t: 'string' }, { k: 'Visible', t: 'boolean' }] };
             EL_DEFS[dpId(d)] = { name: 'Price',       type: 'Text', section: sectionId, repTemplate: 'rir-m2-dp-' + ts, props: [{ k: 'Value', t: 'string' }, { k: 'Visible', t: 'boolean' }] };
             EL_DEFS[ddId(d)] = { name: 'Description', type: 'Text', section: sectionId, repTemplate: 'rir-m2-dd-' + ts, props: [{ k: 'Value', t: 'string' }, { k: 'Visible', t: 'boolean' }] };
@@ -45969,6 +46635,15 @@
             S.bindings[dpId(d) + '|Value'] = { ctxId: 'cms-rir-dishes', fieldName: 'price',       sample: `"${dish.price}"` };
             S.bindings[ddId(d) + '|Value'] = { ctxId: 'cms-rir-dishes', fieldName: 'description', sample: `"${dish.description}"` };
           });
+
+          // Register relationship so the context card shows "Related to Categories"
+          const parentCtxId = S.bindings[parentRepId + '|Items']?.ctxId || 'cms-rir-categories';
+          S.ctxRelationships[`${drRepId}::cms-rir-dishes`] = {
+            linkedTo: parentCtxId,
+            isStatic: true,
+            label: 'Related to {parent}',
+            active: true,
+          };
         });
 
         refreshAllPills();
@@ -46004,9 +46679,9 @@
         const _linkSvg  = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6l-1.2 1.2a2.5 2.5 0 0 1-3.6-3.4L6.4 2.6a2.5 2.5 0 0 1 3.5 0l.1.1"/><path d="M6 10l1.2-1.2a2.5 2.5 0 0 1 3.6 3.4l-1.2 1.2a2.5 2.5 0 0 1-3.5 0l-.1-.1"/></svg>`;
         const _chainSvg = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" width="12" height="12"><circle cx="4.5" cy="3.5" r="2"/><circle cx="11.5" cy="12.5" r="2"/><path d="M4.5 5.5C4.5 9 11.5 7 11.5 10.5"/></svg>`;
 
-        // Apply to all sibling dish items in this repeater (same template = all dish items)
+        // Apply to ALL dish items across every category — same template = all items get allergens
         const allZones = Object.keys(EL_DEFS)
-          .filter(id => EL_DEFS[id]?._rir_drop?.level === 'allergens' && EL_DEFS[id]._rir_drop.parentRepId === parentRepId)
+          .filter(id => EL_DEFS[id]?._rir_drop?.level === 'allergens')
           .map(id => document.getElementById(id)).filter(Boolean);
 
         allZones.forEach(z => {
@@ -46057,7 +46732,7 @@
           S.ctxMap[arRepId] = S.ctxMap[parentRepId] ? [...S.ctxMap[parentRepId]] : [];
           allergens.forEach((al, ai) => {
             const a = ai + 1;
-            EL_DEFS[aiId(a)] = { name: `Allergen ${a}`, type: 'RepItem', section: sectionId, isRepItem: true, repTemplate: 'rir-ai-' + ts, props: [] };
+            EL_DEFS[aiId(a)] = { name: `Allergen ${a}`, type: 'RepItem', section: sectionId, isRepItem: true, repTemplate: 'rir-ai-' + ts, props: [], _rir_blocked: true };
             EL_DEFS[atId(a)] = { name: 'Allergen',       type: 'Text',    section: sectionId, repTemplate: 'rir-at-' + ts, props: [{ k: 'Value', t: 'string' }, { k: 'Visible', t: 'boolean' }] };
           });
 
@@ -46696,6 +47371,26 @@
       }
 
       function closeDd() {
+        // If closing an unconnected M2 dishes placeholder, restore the drop target so
+        // the user can drag again onto the same category item.
+        const closingElId = S.dd.elId;
+        const closingDef  = closingElId ? EL_DEFS[closingElId] : null;
+        if (closingDef?._rir_m2 && !S.bindings[closingElId + '|Items']) {
+          const phEl        = document.getElementById(closingElId);
+          const catZoneEl   = phEl?.parentElement;           // placeholder was zone.appendChild(ph)
+          const catZoneId   = catZoneEl?.id;
+          if (phEl) phEl.remove();
+          delete EL_DEFS[closingElId];
+          delete S.ctxMap[closingElId];
+          // Restore _rir_drop on the category item
+          if (catZoneId && EL_DEFS[catZoneId]) {
+            EL_DEFS[catZoneId]._rir_drop = {
+              level: 'dishes',
+              catIdx:      closingDef._rir_m2_catIdx,
+              parentRepId: closingDef._rir_m2_parentRepId,
+            };
+          }
+        }
         S.dd.open = false;
         S.dd.openPanel = null;
         S.dd.paramName = null;
@@ -46885,6 +47580,9 @@
       ${fnSection}
     </div>`;
 
+        // Display label for field names — "items" array field shown as "List"
+        const fieldLabel = (name) => name === 'items' ? 'List' : name;
+
         // Field items — check for scoped context (nested repeater)
         const isVisibleProp = propKey === 'Visible';
         let elScope = getElementScope(elId);
@@ -46935,10 +47633,14 @@
         }
         const cfgExpType = S.dd.cfgBind?.expectedType || null;
         const fieldFilter = (f) => {
-          if (f.type === 'reference' || f.type === 'multiReference') return true;
           if (isVisibleProp) return f.type === 'boolean';
           if (cfgExpType) return isCompat(f.type, cfgExpType);
-          if (prop?.t) return isCompat(f.type, prop.t);
+          if (prop?.t) {
+            // When binding a typed prop, hide structural field types that aren't directly usable as values
+            if (f.type === 'array' || f.type === 'reference' || f.type === 'multiReference') return false;
+            return isCompat(f.type, prop.t);
+          }
+          if (f.type === 'reference' || f.type === 'multiReference') return true;
           return true;
         };
         const filteredFields = fieldsToShow.filter(fieldFilter);
@@ -46984,7 +47686,7 @@
               if (arrFields.length === 0) return '';
               return `<div style="border-top:1px solid color-mix(in srgb, var(--b2) 60%, transparent);margin-top:2px">
         <div style="padding:6px 10px;font-size:9px;color:#e67e22;font-family:'SF Mono',ui-monospace,Menlo,Consolas,monospace;background:color-mix(in srgb, #e67e22 8%, transparent);border-bottom:1px solid color-mix(in srgb, #e67e22 15%, transparent)">
-          <div style="text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:4px"><span style="font-size:11px">↻</span> ${arr.name.toUpperCase()} · item fields</div>
+          <div style="text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:4px"><span style="font-size:11px">↻</span> List items</div>
           <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:10px;color:var(--t3);margin-top:3px;text-transform:none;letter-spacing:0;line-height:1.5">Selecting a field will also bind the repeater to <b style="color:var(--t1)">${arr.name}</b>.</div>
         </div>
         ${arrFields
@@ -47070,7 +47772,7 @@
           const isSel = fieldName === f.name && !S.dd._autoBindArray;
           return `<div class="dd-sel-item ${isSel ? 'sel' : ''}" onclick="ddSelField(event,'${f.name}')">
       <div style="flex:1;min-width:0">
-        <div ${isSelectedFn ? 'style="font-family:\'DM Mono\',monospace;font-size:11px"' : ''}>${isSel ? '✓ ' : ''}${isRev ? '↩ ' : ''}${f.name}</div>
+        <div ${isSelectedFn ? 'style="font-family:\'DM Mono\',monospace;font-size:11px"' : ''}>${isSel ? '✓ ' : ''}${isRev ? '↩ ' : ''}${fieldLabel(f.name)}</div>
         <div class="dd-sel-item-sub">${f.description || f.sample}</div>
       </div>
       <span class="dd-sel-tag"${isRev ? ' style="background:color-mix(in srgb, #10b981 12%, transparent);color:#10b981"' : ''}>${isRev ? 'reverse ref' : f.type}</span>
@@ -47142,12 +47844,12 @@
         <div style="font-size:11px;font-weight:600;color:var(--t2);margin-bottom:4px">No compatible fields</div>
         <div style="font-size:10px;color:var(--t3);line-height:1.5">No fields match the expected type in this scope.</div>
       </div>`
-            : itemDetailSection +
+            : unboundArraySections +
+              itemDetailSection +
               scopeHeader +
               regularFields.map((f) => renderFieldItemHtml(f, fieldName, isSelectedFn)).join('') +
               reverseRefSection +
-              ancestorSection +
-              unboundArraySections;
+              ancestorSection;
 
         const ddCanAddField =
           selectedCtx &&
@@ -47180,7 +47882,7 @@
         <div class="dd-sel-label">${isSelectedFn ? 'Select Function' : scopedCtx ? 'Select Field <span style="font-size:9px;color:var(--acc);font-family:\'DM Mono\',monospace;font-weight:400">(scoped)</span>' : 'Select Field'}</div>
         <div class="dd-sel-box ${fieldName ? 'filled' : ''} ${fieldOpen ? 'open' : ''} ${!srcId ? 'style="opacity:.5;pointer-events:none"' : ''}" id="dd-field-box">
           <div class="dd-sel-trigger ${fieldName ? 'has-val green' : ''}" onclick="toggleFieldBox(event)">
-            ${fieldName ? `<span>${isSelectedFn ? '<span style="font-family:\'DM Mono\',monospace;font-size:11px">' + fieldName + '</span>' : fieldName}</span>` : `<span style="color:var(--t3)">${srcId ? (isSelectedFn ? 'Select function…' : 'Select…') : 'Pick source first'}</span>`}
+            ${fieldName ? `<span>${isSelectedFn ? '<span style="font-family:\'DM Mono\',monospace;font-size:11px">' + fieldLabel(fieldName) + '</span>' : fieldLabel(fieldName)}</span>` : `<span style="color:var(--t3)">${srcId ? (isSelectedFn ? 'Select function…' : 'Select…') : 'Pick source first'}</span>`}
             <span class="dd-sel-chevron">▾</span>
           </div>
           <div class="dd-sel-dropdown">${fieldItems}${ddAddFieldBtn}</div>
@@ -47188,7 +47890,7 @@
       </div>
     </div>
     <button class="dd-confirm ${srcId && fieldName ? 'show' : ''}" onclick="confirmBind(event)"${S.dd._autoBindArray ? ' style="background:linear-gradient(135deg,var(--acc),#e67e22)"' : ''}>
-      ${S.dd._autoBindArray ? `✓ Bind · ${fieldName} + Repeater → ${S.dd._autoBindArray}` : `✓ Bind${fieldName ? ` · ${fieldName}` : ''}`}
+      ${S.dd._autoBindArray ? `✓ Bind · ${fieldLabel(fieldName)} + Repeater → ${S.dd._autoBindArray}` : `✓ Bind${fieldName ? ` · ${fieldLabel(fieldName)}` : ''}`}
     </button>
   `;
         repositionDd();
@@ -49175,9 +49877,113 @@
           if (k.endsWith('::' + ctxId)) S.ctxRelationships[k].active = active;
         });
       }
+      function updateRirM2DishesFilter(isFiltered) {
+        const menuData  = REP_SAMPLE_DATA['cms-restaurant-menu'] || [];
+        const allDishes = menuData.flatMap(cat => cat.dishes || []);
+        const _filterSvg = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" width="10" height="10"><path d="M2 4h12"/><path d="M4 8h8"/><path d="M6 12h4"/></svg>`;
+        const filterChip = `<span style="display:inline-flex;align-items:center;gap:3px;font-size:9px;background:#0ea5e912;color:#0369a1;border:1px solid #0369a130;border-radius:10px;padding:1px 7px;font-weight:600">${_filterSvg} category = [parent]</span>`;
+
+        // Find every dishes repeater registered in ctxRelationships
+        Object.keys(S.ctxRelationships).forEach(relKey => {
+          if (!relKey.endsWith('::cms-rir-dishes')) return;
+          const repId  = relKey.split('::')[0];
+          const repEl  = document.getElementById(repId);
+          if (!repEl) return;
+
+          const catIdx  = EL_DEFS[repId]?._rir_m2_catIdx;
+          const cat     = catIdx ? menuData[catIdx - 1] : null;
+          const dishes  = isFiltered && cat ? (cat.dishes || []) : allDishes;
+
+          // Update count label
+          const countEl = document.getElementById('rep-count-' + repId);
+          if (countEl) {
+            countEl.innerHTML = isFiltered
+              ? `${dishes.length} dishes · ${filterChip}`
+              : `${dishes.length} dishes <span style="font-size:9px;color:var(--t3);font-weight:400">(all · filter removed)</span>`;
+          }
+
+          // Rebuild the dish grid
+          const grid = repEl.querySelector('[style*="flex-wrap:wrap"]');
+          if (!grid) return;
+
+          if (!isFiltered) {
+            // Filter off: check if the template item has components
+            const templateItem = grid.querySelector(':scope > .rep-item');
+            const hasComponents = templateItem && !!templateItem.querySelector('.c-el');
+
+            if (!hasComponents) {
+              // Empty repeater → keep blank shells
+              grid.innerHTML = dishes.map(() =>
+                `<div class="rep-item" style="flex:1;min-width:140px;padding:12px;border-radius:6px;border:1px solid var(--b1);cursor:pointer;background:var(--sur)"><div class="c-el-overlay" style="border-radius:6px"></div></div>`
+              ).join('');
+              return;
+            }
+
+            // Has components → show all dishes, preserving component structure with fallback content
+            // Build a fieldName map from the template item's c-el binding positions
+            const templateCEls = [...templateItem.querySelectorAll('.c-el')];
+            const fieldMap = templateCEls.map(cel => {
+              if (!cel.id) return null;
+              const b = S.bindings[cel.id + '|Value'];
+              return b ? b.fieldName : null;
+            });
+
+            // Keep the template item in place, update + append clones for remaining dishes
+            // Update the template item with dish[0] data
+            templateCEls.forEach((cel, idx) => {
+              const fieldName = fieldMap[idx];
+              if (!fieldName) return;
+              const valDiv = [...cel.children].find(ch =>
+                !ch.className.includes('c-el-overlay') && !ch.className.includes('el-tags')
+              );
+              if (valDiv && dishes[0] && dishes[0][fieldName] != null)
+                valDiv.textContent = dishes[0][fieldName];
+            });
+
+            // Remove existing extras (any rep-items after the first), then append clones for dishes[1+]
+            [...grid.querySelectorAll(':scope > .rep-item')].slice(1).forEach(el => el.remove());
+            dishes.slice(1).forEach(dish => {
+              const clone = templateItem.cloneNode(true);
+              clone.classList.remove('sel', 'editing', 'child-sel');
+              clone.removeAttribute('id');
+              clone.querySelectorAll('[id]').forEach(el => el.removeAttribute('id'));
+              clone.querySelectorAll('[onclick]').forEach(el => el.removeAttribute('onclick'));
+              clone.querySelectorAll('.el-tags').forEach(el => el.remove());
+              const cloneCEls = [...clone.querySelectorAll('.c-el')];
+              cloneCEls.forEach((cel, idx) => {
+                const fieldName = fieldMap[idx];
+                if (!fieldName) return;
+                const valDiv = [...cel.children].find(ch =>
+                  !ch.className.includes('c-el-overlay') && !ch.className.includes('el-tags')
+                );
+                if (valDiv && dish[fieldName] != null) valDiv.textContent = dish[fieldName];
+              });
+              grid.appendChild(clone);
+            });
+            return;
+          }
+
+          grid.innerHTML = dishes.map((dish) => {
+            const allergenCue = `<div class="rir-m2-allergens-cue" style="margin-top:8px;border:1.5px dashed transparent;border-radius:5px;padding:5px 8px;text-align:center;font-size:10px;color:transparent;cursor:pointer;transition:all .15s;user-select:none;background:transparent" onmouseenter="this.style.borderColor='var(--acc)';this.style.color='var(--acc)';this.style.background='var(--acc-d)'" onmouseleave="this.style.borderColor='transparent';this.style.color='transparent';this.style.background='transparent'">↻ Drop Repeater · allergens</div>`;
+            return `<div style="flex:1;min-width:140px;padding:12px;border-radius:6px;border:1px solid var(--b1);cursor:pointer;display:flex;flex-direction:column;gap:4px;background:var(--sur)">
+              <div style="display:flex;align-items:baseline;justify-content:space-between;gap:6px">
+                <div style="font-weight:600;font-size:12px;color:var(--t1)">${dish.name}</div>
+                <div style="font-size:11px;color:#059669;font-weight:700">${dish.price}</div>
+              </div>
+              <div style="font-size:10px;color:var(--t3);line-height:1.4">${dish.description}</div>
+              ${allergenCue}
+            </div>`;
+          }).join('');
+        });
+      }
+
       function updateRepeaterForFilter(ctxId, isFiltered, relKey) {
         if (ctxId === 'cms-article-authors') {
           updateAuthorsRepeaterFilter(isFiltered);
+          return;
+        }
+        if (ctxId === 'cms-rir-dishes') {
+          updateRirM2DishesFilter(isFiltered);
           return;
         }
         const repCountEl = document.getElementById('rep-count-rel-locations');
@@ -54438,12 +55244,17 @@
       }
 
       /* ── TOAST ── */
-      function toast(msg, ok) {
+      function toast(msg, ok, duration) {
         const t = document.getElementById('toast');
-        t.textContent = msg;
+        t.innerHTML = `<span style="flex:1">${msg}</span><button class="toast-dismiss" onclick="dismissToast()" title="Dismiss">✕</button>`;
         t.className = 'toast show' + (ok ? ' ok' : '');
         clearTimeout(t._t);
-        t._t = setTimeout(() => t.classList.remove('show'), 2400);
+        if (duration !== 0) t._t = setTimeout(() => t.classList.remove('show'), duration || 2400);
+      }
+      function dismissToast() {
+        const t = document.getElementById('toast');
+        clearTimeout(t._t);
+        t.classList.remove('show');
       }
 
       /* ── CLOSE ON OUTSIDE CLICK ── */
@@ -54904,6 +55715,17 @@
           { name: 'Mains',     description: 'Signature main courses'    },
           { name: 'Desserts',  description: 'Sweet endings'             },
         ],
+        'cms-rir-dishes': [
+          { name: 'Bruschetta al Pomodoro', price: '$8.50',  description: 'Grilled bread, tomatoes & basil'           },
+          { name: 'Soup du Jour',           price: '$9.00',  description: "Chef's daily soup selection"               },
+          { name: 'Grilled Salmon',         price: '$24.00', description: 'Herb butter & seasonal vegetables'         },
+          { name: 'Mushroom Risotto',       price: '$18.00', description: 'Creamy arborio, wild mushrooms'            },
+          { name: 'Beef Tenderloin',        price: '$32.00', description: 'Red wine jus, roasted potatoes'            },
+          { name: 'Chicken Supreme',        price: '$22.00', description: 'Pan-roasted, lemon herb sauce'             },
+          { name: 'Tiramisu',               price: '$9.00',  description: 'Classic Italian dessert'                   },
+          { name: 'Fruit Sorbet',           price: '$7.00',  description: 'Seasonal fruit sorbet, dairy-free'         },
+          { name: 'Chocolate Fondant',      price: '$10.00', description: 'Warm dark chocolate, vanilla ice cream'    },
+        ],
         'cms-restaurant-menu': [
           {
             categoryName: 'Starters',
@@ -54950,6 +55772,20 @@
                   { allergenName: 'Gluten', allergenIcon: '🌾' },
                 ],
               },
+              {
+                name: 'Beef Tenderloin',
+                price: '$32.00',
+                description: 'Red wine jus, roasted potatoes',
+                allergens: [
+                  { allergenName: 'Dairy', allergenIcon: '🥛' },
+                ],
+              },
+              {
+                name: 'Chicken Supreme',
+                price: '$22.00',
+                description: 'Pan-roasted, lemon herb sauce',
+                allergens: [],
+              },
             ],
           },
           {
@@ -54972,6 +55808,15 @@
                 price: '$7.00',
                 description: 'Seasonal fruit sorbet, dairy-free',
                 allergens: [],
+              },
+              {
+                name: 'Chocolate Fondant',
+                price: '$10.00',
+                description: 'Warm dark chocolate, vanilla ice cream',
+                allergens: [
+                  { allergenName: 'Gluten', allergenIcon: '🌾' },
+                  { allergenName: 'Eggs', allergenIcon: '🥚' },
+                ],
               },
             ],
           },
@@ -55350,6 +56195,7 @@
 
         // M2 RiR: find contexts that have a reference field in their items and show them first
         const isRirM2 = def?._rir_m2 === true;
+        const isRirM2Allergens = def?._rir_m2_allergens === true;
 
         // Build deduped list: one entry per context, first reference field with a known referencedCollection.
         // Uses a 2-hop lookup: match if the reference points to the parent context OR to any context
@@ -55358,24 +56204,11 @@
         const relatedCtxList = (() => {
           if (!isRirM2) return [];
           const parentCtxId = def._rir_m2_parentCtxId;
-          const parentCtx   = parentCtxId ? findSource(parentCtxId) : null;
 
-          // Collect all context IDs that the parent references (via any field)
+          // Only include the parent context itself — we want 1-hop matches only:
+          // show contexts whose items have a reference field pointing directly at the parent.
+          // (No 2nd-hop expansion, which would erroneously pull in grandchild collections.)
           const parentLinkedIds = new Set(parentCtxId ? [parentCtxId] : []);
-          if (parentCtx) {
-            const itemsField = parentCtx.fields?.find(f => f.name === 'items' && f.type === 'array');
-            (itemsField?.itemFields || []).forEach(f => {
-              if (f.referencedCollection) parentLinkedIds.add(f.referencedCollection);
-            });
-          }
-          // Also add collections referenced by the parent-linked contexts (2nd hop)
-          [...parentLinkedIds].forEach(linkedId => {
-            const linkedCtx = CTX_DEFS.find(c => c.id === linkedId);
-            const lf = linkedCtx?.fields?.find(f => f.name === 'items' && f.type === 'array');
-            (lf?.itemFields || []).forEach(f => {
-              if (f.referencedCollection) parentLinkedIds.add(f.referencedCollection);
-            });
-          });
 
           const seen = new Set();
           const result = [];
@@ -55399,28 +56232,57 @@
         const relatedCtxSection = (() => {
           if (!isRirM2 || relatedCtxList.length === 0) return '';
           const rows = relatedCtxList.map(({ ctx, refFieldName, refCtxName }) => `
-        <div class="dd-sel-item ${srcId === ctx.id ? 'sel' : ''}" onclick="ddRepSelSource(event,'${ctx.id}')" style="${srcId !== ctx.id ? 'background:color-mix(in srgb,#0ea5e9 6%,transparent);border:1px solid color-mix(in srgb,#0369a1 20%,transparent);border-radius:6px;margin:1px 4px;' : ''}">
+        <div class="dd-sel-item ${srcId === ctx.id ? 'sel' : ''}" onclick="ddRepSelSource(event,'${ctx.id}')" style="${srcId !== ctx.id ? 'background:color-mix(in srgb,#8b5cf6 6%,transparent);border:1px solid color-mix(in srgb,#8b5cf6 20%,transparent);border-radius:6px;margin:1px 4px;' : ''}">
           <div style="flex:1;min-width:0">
             <div class="dd-sel-item-name" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
               ${resolveCtxName(ctx.id)}
-              <span style="font-size:9px;background:#0369a118;color:#0369a1;border:1px solid #0369a130;border-radius:10px;padding:1px 6px;font-weight:600;flex-shrink:0">↩ ${refFieldName} → ${refCtxName}</span>
+              <span style="font-size:9px;background:#8b5cf618;color:#6d28d9;border:1px solid #8b5cf630;border-radius:10px;padding:1px 6px;font-weight:600;flex-shrink:0">↱ ${refCtxName}</span>
             </div>
             <div class="dd-sel-item-sub">${ctx.source} · ${ctx.type}</div>
           </div>
         </div>`).join('');
           return `
-        <div style="padding:4px 12px 2px;font-size:9px;font-weight:700;color:#0369a1;letter-spacing:.06em;text-transform:uppercase">Related — has parent reference</div>
+        <div style="padding:4px 12px 2px;font-size:9px;font-weight:700;color:var(--t3);letter-spacing:.06em;text-transform:uppercase">Related — has parent reference</div>
         ${rows}
         <div style="padding:4px 12px 2px;font-size:9px;font-weight:700;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;margin-top:6px">All collections</div>`;
         })();
 
         const relatedIds = new Set(relatedCtxList.map(r => r.ctx.id));
 
+        // M2 allergens: show multi-reference fields on the parent dishes context
+        const allergenMultiRefSection = (() => {
+          if (!isRirM2Allergens) return null;
+          // Find the multiReference allergens field on cms-rir-dishes
+          const dishesCtx = CTX_DEFS.find(c => c.id === 'cms-rir-dishes');
+          const itemsField = dishesCtx?.fields?.find(f => f.name === 'items' && f.type === 'array');
+          const multiRefFields = (itemsField?.itemFields || []).filter(f => f.type === 'multiReference');
+          if (multiRefFields.length === 0) return null;
+          const rows = multiRefFields.map(f => {
+            const refCtx = CTX_DEFS.find(c => c.id === f.referencedCollection);
+            const ctxId  = f.referencedCollection;
+            return `
+      <div class="dd-sel-item ${srcId === ctxId ? 'sel' : ''}" onclick="ddRepSelSource(event,'${ctxId}')" style="${srcId !== ctxId ? 'background:color-mix(in srgb,#8b5cf6 6%,transparent);border:1px solid color-mix(in srgb,#8b5cf6 20%,transparent);border-radius:6px;margin:1px 4px;' : ''}">
+        <div style="flex:1;min-width:0">
+          <div class="dd-sel-item-name" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+            ${refCtx ? resolveCtxName(ctxId) : ctxId}
+            <span style="font-size:9px;background:#8b5cf618;color:#6d28d9;border:1px solid #8b5cf630;border-radius:10px;padding:1px 6px;font-weight:600;flex-shrink:0">↱ ${dishesCtx?.name || 'Dishes'}</span>
+          </div>
+          <div class="dd-sel-item-sub">${refCtx?.source || 'CMS'} · ${refCtx?.type || 'list'}</div>
+        </div>
+      </div>`;
+          }).join('');
+          const multiRefIds = new Set(multiRefFields.map(f => f.referencedCollection));
+          return { html: `
+    <div style="padding:4px 12px 2px;font-size:9px;font-weight:700;color:#6d28d9;letter-spacing:.06em;text-transform:uppercase">Multi-references on this item</div>
+    ${rows}
+    <div style="padding:4px 12px 2px;font-size:9px;font-weight:700;color:var(--t3);letter-spacing:.06em;text-transform:uppercase;margin-top:6px">All collections</div>`, ids: multiRefIds };
+        })();
+
         const ctxSrcItems =
           rUserCtxs.length === 0
             ? `<div class="dd-notice" style="padding:8px 12px;line-height:1.6">No data sources available on this section.</div>`
             : rUserCtxs
-                .filter(ctx => !relatedIds.has(ctx.id))
+                .filter(ctx => !relatedIds.has(ctx.id) && !(allergenMultiRefSection?.ids?.has(ctx.id)))
                 .map(
                   (ctx) => `
         <div class="dd-sel-item ${srcId === ctx.id ? 'sel' : ''}" onclick="ddRepSelSource(event,'${ctx.id}')">
@@ -55493,7 +56355,7 @@
 
         const srcItems = `<div class="dd-src-section">
       <div class="dd-src-header" style="display:flex;align-items:center"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h10"/></svg> Available Contexts <span class="dd-src-count">${rUserCtxs.length}</span>${repExploreBtn}</div>
-      ${relatedCtxSection}
+      ${isRirM2Allergens ? (allergenMultiRefSection?.html || '') : relatedCtxSection}
       ${ctxSrcItems}
       ${repAddCtxLink}
       ${rSysCtxItems}
@@ -55629,8 +56491,13 @@
 
         // M2 RiR: placeholder was created on drop — route to M2 dishes renderer
         if (def?._rir_m2 === true) {
-          closeDd();
           _addRirDishesLevelM2FromPanel(elId);
+          closeDd();
+          return;
+        }
+        if (def?._rir_m2_allergens === true) {
+          _addRirAllergensLevelM2FromPanel(elId);
+          closeDd();
           return;
         }
 
@@ -56582,6 +57449,22 @@
       (function handleDeepLink() {
         var hash = window.location.hash;
         if (!hash) return;
+
+        // #page=PageName — navigate canvas to a named page
+        var pm = hash.match(/^#page=(.+)$/);
+        if (pm) {
+          var pageName = decodeURIComponent(pm[1].replace(/\+/g, ' '));
+          setTimeout(function () {
+            var menuEl = Array.from(document.querySelectorAll('.pp-item, .pp-sub')).find(function (el) {
+              return el.textContent.trim().replace(/^[\S ]+\s*/, '') === pageName ||
+                     el.textContent.trim() === pageName;
+            });
+            if (menuEl) selectPage(menuEl, pageName);
+          }, 150);
+          return;
+        }
+
+        // #spec=specId — open product spec page
         var m = hash.match(/^#spec=(.+)$/);
         if (!m) return;
         var specId = decodeURIComponent(m[1]);

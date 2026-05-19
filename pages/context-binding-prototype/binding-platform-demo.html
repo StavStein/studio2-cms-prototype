@@ -41962,6 +41962,15 @@
         }
         const ctx = findSource(ctxId);
         if (!ctx) return ctxId;
+        // RIR pages (M1 sub-array and M2 separate-context-with-filter) intentionally have
+        // per-row dish contexts. Suppress the "#N" instance suffix there — it's noise.
+        const isRirPage = (() => {
+          const def = EL_DEFS[sectionId];
+          if (!def) return false;
+          if (sectionId === 'sec-rir' || sectionId === 'sec-rir-m2') return true;
+          return def.section === 'sec-rir' || def.section === 'sec-rir-m2';
+        })();
+        if (isRirPage) return ctx.name;
         const pageSections = getPageSectionsForSection(sectionId);
         let instanceIndex = 0;
         let totalSameName = 0;
@@ -56387,8 +56396,16 @@
                     : isMR
                       ? `multi-ref → ${refCtx?.name || ''}`
                       : f.type;
-                  const nestedLabel = f._nestedIn
-                    ? `<span style="font-size:9px;color:var(--t3);font-family:'SF Mono',ui-monospace,Menlo,Consolas,monospace">${f._nestedIn} › </span>`
+                  // Display: rename the top-level `items` array to `List` and capitalize
+                  // sub-array segments so the hierarchy reads List > Dishes > Allergens.
+                  const cap = (s) => s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+                  const friendlySeg = (s) => s === 'items' ? 'List' : cap(s);
+                  const friendlyPrefix = f._nestedIn
+                    ? f._nestedIn.split(' › ').map(friendlySeg).join(' › ')
+                    : '';
+                  const friendlyName = f._nestedIn ? cap(f.name) : friendlySeg(f.name);
+                  const nestedLabel = friendlyPrefix
+                    ? `<span style="font-size:9px;color:var(--t3);font-family:'SF Mono',ui-monospace,Menlo,Consolas,monospace">${friendlyPrefix} › </span>`
                     : '';
                   const nestedIndent = f._nestedIn ? ' style="padding-left:20px"' : '';
                   const fullPath = f._nestedIn
@@ -56396,7 +56413,7 @@
                     : f.name;
                   return `<div class="dd-sel-item ${fieldName === fullPath ? 'sel' : ''}" onclick="ddRepSelField(event,'${fullPath}')"${nestedIndent}>
           <div style="flex:1;min-width:0">
-            <div>${isRev ? '↩ ' : ''}${nestedLabel}${f.name}</div>
+            <div>${isRev ? '↩ ' : ''}${nestedLabel}${friendlyName}</div>
             <div class="dd-sel-item-sub">${f.description || f.sample}</div>
           </div>
           <span class="dd-sel-tag"${tagStyle}>${tagText}</span>

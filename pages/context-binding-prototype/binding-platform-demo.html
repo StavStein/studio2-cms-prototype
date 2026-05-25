@@ -43002,8 +43002,9 @@
     <path d="M6 3.5a2 2 0 1 1 2 2v6.5a2.5 2.5 0 1 1-1-2v-4.5a2 2 0 0 1-1-2z"/>
   </svg>`;
 
+        const isStaticRelational = !!(autoRel?.isStatic);
         const manualFilterCount = (S.filterRules[ctxId] || []).length;
-        const totalFilterCount = (autoRel && autoRel.active ? 1 : 0) + manualFilterCount;
+        const totalFilterCount = (autoRel && autoRel.active && !isStaticRelational ? 1 : 0) + manualFilterCount;
         const filterCountLine =
           totalFilterCount > 0
             ? totalFilterCount + ' filter' + (totalFilterCount > 1 ? 's' : '')
@@ -43091,6 +43092,34 @@
             ${_psVal > 50 ? `<div style="padding:6px 8px;background:color-mix(in srgb,#f59e0b 10%,transparent);border:1px solid color-mix(in srgb,#f59e0b 30%,transparent);border-radius:6px;font-size:11px;color:#92400e;line-height:1.5">⚠ Loading may be slow due to the high number of items loading at once.</div>` : ''}
           </div>
         </div>`;
+
+        const relatedIdRow = isStaticRelational ? (() => {
+          const parentSrc = autoRel.linkedTo ? findSource(autoRel.linkedTo) : null;
+          const parentName = parentSrc ? resolveCtxName(autoRel.linkedTo) : (autoRel.linkedTo || '');
+          const parentIcon = parentSrc?.icon || '';
+          const isActive = !!autoRel.active;
+          const bindSvgChain = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="4.5" cy="3.5" r="2"/><circle cx="11.5" cy="12.5" r="2"/><path d="M4.5 5.5C4.5 9 11.5 7 11.5 10.5"/></svg>`;
+          const parentCtxId = autoRel.linkedTo || '';
+          const valueHtml = isActive
+            ? `<div class="prop-bound-chip prop-bound-detail" style="display:flex">
+                <span class="prop-bound-ctx">${parentIcon} ${parentName} (source)</span>
+                <span class="prop-bound-field">Current item.ID<span class="chip-x" onclick="confirmFilterOff(event,'${autoRelKey}')">✕</span></span>
+              </div>`
+            : `<span style="font-size:11px;color:var(--t3);font-style:italic;cursor:pointer" onclick="openRelatedIdBind(event,'${ctxId}','${autoRelKey}','${parentCtxId}','${parentName}')">Connect to ${parentName} →</span>`;
+          return `<div class="ctx-cfg-row">
+  <div class="ctx-cfg-lbl">Related {${parentName}}</div>
+  <div class="ctx-cfg-right" style="flex:1">
+    <div class="prop-row ${isActive ? 'bound' : ''}" style="flex:1;min-width:0">
+      <div class="prop-main">
+        <div class="prop-val">${valueHtml}</div>
+      </div>
+      <div class="bind-btn ${isActive ? 'bound' : ''}" title="${isActive ? 'Relationship active' : 'Pick field to reconnect'}" onclick="openRelatedIdBind(event,'${ctxId}','${autoRelKey}','${parentCtxId}','${parentName}')">
+        ${bindSvgChain}
+      </div>
+    </div>
+  </div>
+</div>`;
+        })() : '';
 
         const configsToShow = (
           autoRel ? configs.filter((c) => c.key !== 'filterByArticle') : configs
@@ -43263,6 +43292,7 @@
     ${sortRow}
     ${randomRow}
     ${pageSizeRow}
+    ${relatedIdRow}
   </div>
   ${
     hasOtherCfgs
@@ -43552,6 +43582,40 @@
         if (cfg.input === 'toggle') return 'string';
         if (cfg.input === 'select') return 'string';
         return null;
+      }
+
+      function openRelatedIdBind(e, ctxId, relKey, parentCtxId, parentName) {
+        e.stopPropagation();
+        const existingBinding = S.bindings['cfg:' + ctxId + '|_relatedId'];
+        S.dd = {
+          open: true,
+          elId: S.sel,
+          propKey: '_relatedId',
+          paramName: null,
+          step: existingBinding ? 'field' : 'source',
+          srcId: existingBinding?.ctxId || parentCtxId || null,
+          fieldName: existingBinding?.fieldName || null,
+          openPanel: null,
+          cfgBind: { ctxId, cfgKey: '_relatedId', expectedType: 'string', relKey },
+        };
+        const rect = e.currentTarget.getBoundingClientRect();
+        const dd = document.getElementById('dd');
+        const panelLeft = window.innerWidth - parseInt(getComputedStyle(document.documentElement).getPropertyValue('--panel'));
+        dd.style.left = Math.max(8, panelLeft - 260) + 'px';
+        dd.style.zIndex = '2147483647';
+        dd.style.visibility = 'hidden';
+        dd.classList.add('open');
+        requestAnimationFrame(() => {
+          const ddH = dd.offsetHeight;
+          const vpH = window.innerHeight;
+          let top = rect.bottom + 5;
+          if (top + ddH > vpH - 8) top = Math.max(8, rect.top - ddH - 5);
+          if (top + ddH > vpH - 8) top = Math.max(8, vpH - ddH - 8);
+          dd.style.top = top + 'px';
+          dd.style.visibility = '';
+        });
+        document.getElementById('dd-title').textContent = 'Connect · Related {' + parentName + '}';
+        renderDd();
       }
 
       function openCfgBind(e, ctxId, cfgKey) {
@@ -47950,13 +48014,23 @@
         if (!srcId || !fieldName) return;
 
         if (S.dd.cfgBind) {
-          const { ctxId, cfgKey } = S.dd.cfgBind;
+          const { ctxId, cfgKey, relKey } = S.dd.cfgBind;
           const bKey = 'cfg:' + ctxId + '|' + cfgKey;
           const srcCtx = findSource(srcId);
           const field = srcCtx ? resolveFieldByName(srcCtx.fields, fieldName) : null;
           S.bindings[bKey] = { ctxId: srcId, fieldName, sample: field?.sample || '' };
+          // If this is a relatedId bind, reactivate the relationship and restore per-category skeleton counts
+          if (relKey) {
+            const rel = S.ctxRelationships[relKey];
+            if (rel) {
+              rel.active = true;
+              syncSiblingRelationships(relKey, true);
+              const relCtxId = relKey.includes('::') ? relKey.split('::')[1] : relKey;
+              updateRepeaterForFilter(relCtxId, true, relKey, true);
+            }
+          }
           closeDd();
-          toast('✓ ' + cfgKey + ' → ' + (srcCtx?.name || srcId) + ' · ' + fieldName, true);
+          toast('✓ Related → ' + (srcCtx?.name || srcId) + ' · ' + fieldName, true);
           renderBody();
           return;
         }
@@ -49886,7 +49960,7 @@
           if (k.endsWith('::' + ctxId)) S.ctxRelationships[k].active = active;
         });
       }
-      function updateRirM2DishesFilter(isFiltered) {
+      function updateRirM2DishesFilter(isFiltered, skeletonOnly) {
         const menuData  = REP_SAMPLE_DATA['cms-restaurant-menu'] || [];
         const allDishes = menuData.flatMap(cat => cat.dishes || []);
         const _filterSvg = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" width="10" height="10"><path d="M2 4h12"/><path d="M4 8h8"/><path d="M6 12h4"/></svg>`;
@@ -49902,6 +49976,15 @@
           const catIdx  = EL_DEFS[repId]?._rir_m2_catIdx;
           const cat     = catIdx ? menuData[catIdx - 1] : null;
           const dishes  = isFiltered && cat ? (cat.dishes || []) : allDishes;
+          if (skeletonOnly) {
+            const grid = repEl.querySelector('[style*="flex-wrap:wrap"]');
+            if (grid) grid.innerHTML = dishes.map(() =>
+              `<div class="rep-item" style="flex:1;min-width:140px;padding:12px;border-radius:6px;border:1px solid var(--b1);cursor:pointer;background:var(--sur)"><div class="c-el-overlay" style="border-radius:6px"></div></div>`
+            ).join('');
+            const countEl = document.getElementById('rep-count-' + repId);
+            if (countEl) countEl.innerHTML = `${dishes.length} dishes · <span style="font-size:9px;color:#0369a1;font-weight:600">category = [parent]</span>`;
+            return;
+          }
 
           // Update count label
           const countEl = document.getElementById('rep-count-' + repId);
@@ -49986,13 +50069,13 @@
         });
       }
 
-      function updateRepeaterForFilter(ctxId, isFiltered, relKey) {
+      function updateRepeaterForFilter(ctxId, isFiltered, relKey, skeletonOnly) {
         if (ctxId === 'cms-article-authors') {
           updateAuthorsRepeaterFilter(isFiltered);
           return;
         }
         if (ctxId === 'cms-rir-dishes') {
-          updateRirM2DishesFilter(isFiltered);
+          updateRirM2DishesFilter(isFiltered, skeletonOnly);
           return;
         }
         const repCountEl = document.getElementById('rep-count-rel-locations');

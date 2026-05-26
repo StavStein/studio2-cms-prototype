@@ -49,5 +49,6 @@ artifacts:
 - `artifacts/product/product-spec-repeater-event-handlers.md` | product | `ck-product-spec` | product spec | inputs: strategy, discovery
 - `artifacts/product/product-spec-repeater-in-repeater.md` | product | `ck-product-spec` | product spec | inputs: strategy, discovery
 - `artifacts/product/product-spec-repeater-pagination.md` | product | `ck-product-spec` | product spec | inputs: strategy, discovery
+- `artifacts/product/pagination-approach-comparison.md` | product | manual | approach comparison (old vs new pagination) | inputs: product-spec-repeater-pagination
 - `artifacts/research-summary-repeater-event-handlers/index.html` | research-summary-repeater-event-handlers | unknown | index | inputs: unknown
 <!-- creator-kit:artifact-map:end -->

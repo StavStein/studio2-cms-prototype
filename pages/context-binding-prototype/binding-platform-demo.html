@@ -35815,6 +35815,8 @@
           ],
         },
         repPagination: {},
+        repLoadMoreFn: {},
+        paginationApproach: 1,
       };
 
       /* ── ELEMENT SELECTION ── */
@@ -37432,6 +37434,107 @@
         p.infoBannerDismissed = true;
         renderBody();
       }
+      function togglePaginationApproach() {
+        S.paginationApproach = S.paginationApproach === 1 ? 2 : 1;
+        S.paginationSimNoLoadMore = false; // reset sub-state on approach switch
+        renderBody();
+      }
+      function getRepLoadMoreFn(repId) {
+        const bkey = repId + '|LoadMore';
+        const b = S.bindings[bkey];
+        return b || null;
+      }
+      function setRepLoadMoreFn(repId, ctxId, fnName) {
+        const bkey = repId + '|LoadMore';
+        if (fnName) {
+          S.bindings[bkey] = { ctxId, fieldName: fnName };
+          const p = getRepPag(repId);
+          p.mode = 'scroll';
+        } else {
+          delete S.bindings[bkey];
+          const p = getRepPag(repId);
+          p.mode = 'none';
+        }
+        renderBody();
+        refreshRepLoadMoreButton(repId);
+      }
+      function _paginationTweakBar(approach, ctxHasLoadMore) {
+        return `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:8px;padding:5px 8px;background:color-mix(in srgb, #f59e0b 8%, transparent);border:1px solid color-mix(in srgb, #f59e0b 25%, transparent);border-radius:6px">
+          <span style="font-size:10px">🔧</span>
+          <span style="font-size:10px;color:#92400e;font-weight:600;flex:1">Approach ${approach}</span>
+          <span onclick="togglePaginationApproach()" style="font-size:9px;color:#92400e;cursor:pointer;font-weight:500;padding:2px 8px;border:1px solid color-mix(in srgb, #f59e0b 40%, transparent);border-radius:4px;background:color-mix(in srgb, #f59e0b 12%, transparent)">Switch to ${approach === 1 ? '2' : '1'}</span>
+          ${approach === 2 ? `<div style="display:flex;align-items:center;gap:4px;width:100%;margin-top:2px;padding-top:4px;border-top:1px solid color-mix(in srgb, #f59e0b 20%, transparent)">
+            <span style="font-size:9px;color:#92400e">Context has Load More: <span onclick="S.paginationSimNoLoadMore=!S.paginationSimNoLoadMore;renderBody()" style="cursor:pointer;font-weight:700;text-decoration:underline">${ctxHasLoadMore ? 'Yes' : 'No'}</span></span>
+          </div>` : ''}
+        </div>`;
+      }
+
+      function _paginationCtxHasLoadMore(ctx) {
+        const real = (ctx.actions || CMS_CONTEXT_ACTIONS).some(a => a.name === 'loadMore');
+        return real && !S.paginationSimNoLoadMore;
+      }
+
+      // Approach 2 inline: renders a Pagination toggle row to go inside Properties section
+      function renderPaginationInline(repId, b, ctx) {
+        if (S.paginationApproach !== 2 || !b || !ctx) return '';
+        const _hasLoadMore = !!getRepLoadMoreFn(repId);
+        const _ctxHasLoadMore = _paginationCtxHasLoadMore(ctx);
+        const tweakBar = _paginationTweakBar(2, _ctxHasLoadMore);
+
+        if (!_ctxHasLoadMore) {
+          // Context has no loadMore — hide pagination entirely, just show tweak bar
+          return `<div style="margin-top:8px">${tweakBar}</div>`;
+        }
+
+        return `<div style="margin-top:10px">
+          ${tweakBar}
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0">
+            <span style="font-size:11px;color:var(--t1);font-weight:500;display:flex;align-items:center;gap:5px">
+              Pagination
+              <span class="cfg-info">ⓘ<span class="cfg-info-tip">When enabled, items are loaded in batches instead of all at once. The batch size and loading behavior are configured in the context settings.</span></span>
+            </span>
+            <div class="tog ${_hasLoadMore ? 'on' : ''}" onclick="${_hasLoadMore ? `setRepLoadMoreFn('${repId}',null,null)` : `setRepLoadMoreFn('${repId}','${b.ctxId}','loadMore')`}" style="transform:scale(.8)"></div>
+          </div>
+          ${_hasLoadMore ? `
+          <div style="margin-top:4px">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 0">
+              <span style="font-size:11px;color:var(--t2);display:inline-flex;align-items:center;gap:5px">Items per load</span>
+              <span style="font-size:12px;font-family:'SF Mono',ui-monospace,Menlo,Consolas,monospace;color:var(--t1);font-weight:600">${S.cfgValues?.[b.ctxId]?.pageSize || '25'}</span>
+            </div>
+            <div style="margin-top:4px"><span style="font-size:11px;color:var(--acc);cursor:pointer;text-decoration:underline" onclick="S.ctxSettingsView='${b.ctxId}';renderBody()">Edit amount of items in ${resolveCtxName(ctx.id)} settings →</span></div>
+          </div>` : ''}
+        </div>`;
+      }
+
+      // Approach 1: renders as its own collapsible Pagination section
+      function renderPaginationSection(repId, b, ctx) {
+        const _lmFn = getRepLoadMoreFn(repId);
+        const _hasLoadMore = !!_lmFn;
+        const _ctxHasLoadMore = _paginationCtxHasLoadMore(ctx);
+        const approach = S.paginationApproach;
+        const tweakBar = _paginationTweakBar(approach, _ctxHasLoadMore);
+
+        // Approach 2 is rendered inline in Properties — return empty for the separate section
+        if (approach === 2) return '';
+
+        // Approach 1: Function binding via openDd (developer-facing)
+        const bodyHtml = `${tweakBar}
+          <div class="prop-wrap" style="margin-bottom:0">
+            <div class="prop-key" style="font-size:11px;color:var(--t2);font-family:'SF Mono',ui-monospace,Menlo,Consolas,monospace;padding:0 2px">LoadMore()</div>
+            ${renderEventHandlerProp(repId, 'LoadMore')}
+            ${_hasLoadMore ? `<div style="font-size:10px;color:var(--t3);margin-top:4px;line-height:1.4">Items load progressively as visitors scroll. Configure items per load in <span style="color:var(--acc);cursor:pointer;text-decoration:underline" onclick="S.ctxSettingsView='${b.ctxId}';renderBody()">context settings →</span></div>` : `<div style="font-size:10px;color:var(--t3);margin-top:4px;line-height:1.4">All items load at once. To load items progressively, connect a Load More function. Item count is configured in <span style="color:var(--acc);cursor:pointer;text-decoration:underline" onclick="S.ctxSettingsView='${b.ctxId}';renderBody()">context settings →</span></div>`}
+          </div>`;
+
+        return `<div class="rp-cat ${S.openCats.repconfig ? 'open' : ''}" id="rp-cat-repconfig">
+        <div class="rp-cat-head" onclick="toggleCat('repconfig')">
+          <span class="rp-cat-chevron">›</span>
+          <span class="rp-cat-title">Pagination</span>
+        </div>
+        <div class="rp-cat-body">
+          ${bodyHtml}
+        </div>
+      </div>`;
+      }
       function refreshRepLoadMoreButton(repId) {
         const repEl = document.getElementById(repId);
         if (!repEl) return;
@@ -37532,32 +37635,6 @@
         </div>
       </div>
 
-      <div class="fn-param-wrap">
-        <div class="fn-param-key">Page size</div>
-        <div class="fn-param-row">
-          <div class="prop-main">
-            <div class="prop-val">
-              <input type="number" min="1" max="100" value="${p.pageSize}" onchange="S._itemsParams['${repId}'].pageSize=this.value" style="border:none;font-size:11px;font-family:'SF Mono',ui-monospace,Menlo,Consolas,monospace;background:transparent;color:var(--t1);width:60px;padding:0 4px">
-            </div>
-          </div>
-          <div class="bind-btn" onclick="openParamDd(event,'${repId}','Items','pageSize')" title="Bind page size to a context field">
-            <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" width="12" height="12"><circle cx="4.5" cy="3.5" r="2"/><circle cx="11.5" cy="12.5" r="2"/><path d="M4.5 5.5C4.5 9 11.5 7 11.5 10.5"/></svg>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    <div class="prop-wrap" style="margin-top:10px">
-      <div class="prop-key" style="font-size:11px">Pagination</div>
-      <div style="display:flex;gap:6px">
-        <div onclick="setRepPagMode('${repId}','scroll')" style="flex:1;padding:6px 6px;border-radius:6px;border:1.5px solid ${pag.mode === 'scroll' ? 'var(--acc)' : 'var(--b1)'};background:${pag.mode === 'scroll' ? 'color-mix(in srgb, var(--acc) 6%, transparent)' : 'var(--bg)'};cursor:pointer;text-align:center;transition:.15s">
-          <div style="font-size:10px;font-weight:${pag.mode === 'scroll' ? '600' : '400'};color:${pag.mode === 'scroll' ? 'var(--acc)' : 'var(--t3)'}">Infinite scroll</div>
-        </div>
-        <div onclick="setRepPagMode('${repId}','button')" style="flex:1;padding:6px 6px;border-radius:6px;border:1.5px solid ${pag.mode === 'button' ? 'var(--acc)' : 'var(--b1)'};background:${pag.mode === 'button' ? 'color-mix(in srgb, var(--acc) 6%, transparent)' : 'var(--bg)'};cursor:pointer;text-align:center;transition:.15s">
-          <div style="font-size:10px;font-weight:${pag.mode === 'button' ? '600' : '400'};color:${pag.mode === 'button' ? 'var(--acc)' : 'var(--t3)'}">Load more</div>
-        </div>
-      </div>
     </div>
 
     <div class="prop-wrap" style="margin-top:8px">
@@ -37569,8 +37646,8 @@
         pag.showLimit
           ? `
       <div style="margin-top:4px;display:flex;align-items:center;gap:8px">
-        <input type="range" min="1" max="${pag.mode === 'scroll' ? 100 : 1000}" value="${pag.limit}" oninput="setRepLimit('${repId}',this.value)" style="flex:1;accent-color:var(--acc);height:3px">
-        <input type="number" min="1" max="${pag.mode === 'scroll' ? 100 : 1000}" value="${pag.limit}" onchange="setRepLimit('${repId}',this.value)" style="width:44px;padding:3px 4px;border:1px solid var(--b1);border-radius:4px;font-size:10px;font-family:'SF Mono',ui-monospace,Menlo,Consolas,monospace;text-align:center;background:var(--bg);color:var(--t1)">
+        <input type="range" min="1" max="1000" value="${pag.limit}" oninput="setRepLimit('${repId}',this.value)" style="flex:1;accent-color:var(--acc);height:3px">
+        <input type="number" min="1" max="1000" value="${pag.limit}" onchange="setRepLimit('${repId}',this.value)" style="width:44px;padding:3px 4px;border:1px solid var(--b1);border-radius:4px;font-size:10px;font-family:'SF Mono',ui-monospace,Menlo,Consolas,monospace;text-align:center;background:var(--bg);color:var(--t1)">
       </div>`
           : ''
       }
@@ -37626,6 +37703,9 @@
         const ctxCount = repCtxIds.length;
         const ctxContent = renderCtxList();
 
+        // Ensure LoadMore prop exists on this repeater def for openDd
+        if (def.props && !def.props.find(p => p.k === 'LoadMore')) def.props.push({ k: 'LoadMore', t: 'function' });
+
         let ctxSummaryHtml = '';
         if (b && ctx) {
           const p = getRepPag(repId);
@@ -37675,28 +37755,7 @@
         </div>
       </div>`;
           } else {
-            ctxSummaryHtml = `<div class="rp-cat ${S.openCats.repconfig ? 'open' : ''}" id="rp-cat-repconfig">
-        <div class="rp-cat-head" onclick="toggleCat('repconfig')">
-          <span class="rp-cat-chevron">›</span>
-          <span class="rp-cat-title">Pagination</span>
-        </div>
-        <div class="rp-cat-body">
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0">
-            <span style="font-size:11px;color:var(--t1);font-weight:500;display:flex;align-items:center;gap:5px">
-              Infinite scroll
-              <span style="font-size:10px;color:var(--t3);cursor:help;display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border:1px solid var(--b2);border-radius:50%;line-height:1" title="Automatically loads more items as the user scrolls down.">ⓘ</span>
-            </span>
-            <div class="tog ${p.mode === 'scroll' ? 'on' : ''}" onclick="setRepPagMode('${repId}','${p.mode === 'scroll' ? 'none' : 'scroll'}')" style="transform:scale(.8)"></div>
-          </div>
-          <div style="margin-top:8px">
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 0">
-              <span style="font-size:11px;color:var(--t2);display:inline-flex;align-items:center;gap:5px">Items per load <span class="cfg-info">?<span class="cfg-info-tip">${p.mode === 'scroll' ? 'How many items load at a time as visitors scroll. Use a lower number for faster loading, or a higher number to load more items at once.' : 'How many items the repeater displays. With pagination off, all of these items load at once.'}</span></span></span>
-              <span style="font-size:12px;font-family:'SF Mono',ui-monospace,Menlo,Consolas,monospace;color:var(--t1);font-weight:600">${S.cfgValues?.[b.ctxId]?.pageSize || '25'}</span>
-            </div>
-            <div style="margin-top:4px"><span style="font-size:11px;color:var(--acc);cursor:pointer;text-decoration:underline" onclick="S.ctxSettingsView='${b.ctxId}';renderBody()">Edit in ${resolveCtxName(ctx.id)} configuration →</span></div>
-          </div>
-        </div>
-      </div>`;
+            ctxSummaryHtml = renderPaginationSection(repId, b, ctx);
           }
         }
 
@@ -37864,6 +37923,7 @@
       </div>
       ${disconnectedItemsNote}
       ${b && ctx && def.itemsConfigMode ? renderItemsParams(repId, b, ctx) : ''}
+      ${b && ctx ? renderPaginationInline(repId, b, ctx) : ''}
       ${suggestedFieldsHtml}
     </div>
   </div>
@@ -39048,6 +39108,9 @@
                 })()
               : '';
 
+          // Ensure LoadMore prop exists on this repeater def for openDd
+          if (def.props && !def.props.find(p => p.k === 'LoadMore')) def.props.push({ k: 'LoadMore', t: 'function' });
+
           let ctxSummaryHtml = '';
           if (b && ctx) {
             const p = getRepPag(S.sel);
@@ -39095,32 +39158,7 @@
           </div>
         </div>`;
             } else {
-              ctxSummaryHtml = `<div class="rp-cat ${S.openCats.repconfig ? 'open' : ''}" id="rp-cat-repconfig">
-          <div class="rp-cat-head" onclick="toggleCat('repconfig')">
-            <span class="rp-cat-chevron">›</span>
-            <span class="rp-cat-title">Pagination</span>
-          </div>
-          <div class="rp-cat-body">
-            <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0">
-              <span style="font-size:11px;color:var(--t1);font-weight:500;display:flex;align-items:center;gap:5px">
-                Infinite scroll
-                <span style="font-size:10px;color:var(--t3);cursor:help;display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border:1px solid var(--b2);border-radius:50%;line-height:1" title="Automatically loads more items as the user scrolls down.">ⓘ</span>
-              </span>
-              <div class="tog ${p.mode === 'scroll' ? 'on' : ''}" onclick="setRepPagMode('${S.sel}','${p.mode === 'scroll' ? 'none' : 'scroll'}')" style="transform:scale(.8)"></div>
-            </div>
-            ${p.mode === 'scroll' ? `
-            <div style="margin-top:8px">
-              <div style="display:flex;align-items:center;justify-content:space-between;padding:2px 0">
-                <span style="font-size:11px;color:var(--t2);display:inline-flex;align-items:center;gap:5px">Items per load <span class="cfg-info">?<span class="cfg-info-tip">How many items load at a time as visitors scroll. Use a lower number for faster loading, or a higher number to load more items at once.</span></span></span>
-                <span style="font-size:12px;font-family:'SF Mono',ui-monospace,Menlo,Consolas,monospace;color:var(--t1);font-weight:600">${S.cfgValues?.[b.ctxId]?.pageSize || '25'}</span>
-              </div>
-              <div style="margin-top:4px"><span style="font-size:11px;color:var(--acc);cursor:pointer;text-decoration:underline" onclick="S.ctxSettingsView='${b.ctxId}';renderBody()">Edit in ${resolveCtxName(ctx.id)} configuration →</span></div>
-            </div>` : `
-            <div style="margin-top:8px;padding:8px 10px;background:var(--sur2);border:1px solid var(--b1);border-radius:8px">
-              <div style="font-size:11px;color:var(--t2);line-height:1.6">Without pagination, all items load at once. To control how many items are shown, set the item limit in the <span style="color:var(--acc);cursor:pointer;font-weight:500;text-decoration:underline" onclick="S.ctxSettingsView='${b.ctxId}';renderBody()">context configuration →</span></div>
-            </div>`}
-          </div>
-        </div>`;
+              ctxSummaryHtml = renderPaginationSection(S.sel, b, ctx);
             }
           }
 
@@ -39163,6 +39201,7 @@
           </div>
           ${emptyRepSettingsHtml}
         </div>
+        ${b && ctx ? renderPaginationInline(S.sel, b, ctx) : ''}
       </div>
     </div>
     ${ctxSummaryHtml}
@@ -40224,6 +40263,12 @@
           oldBinding.fnParams.forEach((p) => delete S.bindings[`${bkey}|param:${p.name}`]);
         }
         delete S.bindings[bkey];
+        // Sync pagination mode when LoadMore is unbound
+        if (propKey === 'LoadMore') {
+          const _p = getRepPag(elId);
+          _p.mode = 'none';
+          refreshRepLoadMoreButton(elId);
+        }
         applyBindingToCanvas(elId, propKey, null);
 
         if (def?.repTemplate) {
@@ -45387,6 +45432,7 @@
       let _repPresetCounter = 0;
       const REP_PROPS = [
         { k: 'Items', t: 'list' },
+        { k: 'LoadMore', t: 'function' },
         { k: 'Visible', t: 'boolean' },
         { k: 'onItemReady', t: 'function' },
         { k: 'onItemRemoved', t: 'function' },
@@ -48135,6 +48181,12 @@
           if (field.template) bindingData.fnTemplate = field.template;
         }
         S.bindings[bkey] = bindingData;
+        // Sync pagination mode when LoadMore is bound
+        if (propKey === 'LoadMore') {
+          const _p = getRepPag(elId);
+          _p.mode = 'scroll';
+          refreshRepLoadMoreButton(elId);
+        }
         if (field.params) {
           field.params.forEach((p) => {
             if (p.default) {
